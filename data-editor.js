@@ -18,6 +18,38 @@ class DataEditor {
             if(err) console.log(err)
         })
     }
+    createUser(username, email, password) {
+        this.data.users.push({
+            username: username,
+            email: email,
+            password: password,
+            links: []
+        })
+        this.save()
+    }
+    validateNewUser(username, email) {
+        return (this.data.users.filter(user => user.username==username || user.email==email).length == 0)
+    }
+    validateNewUUID(id) {
+        return !this.data.authTokens.some(token => token.id == id)
+    }
+    generateNewUUID() {
+        let id = uuid.v4()
+        if(!this.validateNewUUID(id)) {
+            return this.generateNewUUID()
+        }
+        return id 
+    }
+    generateAuthToken(username) {
+        let id = this.generateNewUUID()
+        let token = {
+            username: username,
+            id: id
+        }
+        this.data.authTokens.push(token)
+        this.save()
+        return token 
+    }
 }
 
 module.exports = DataEditor

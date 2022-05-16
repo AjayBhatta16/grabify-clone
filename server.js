@@ -22,4 +22,24 @@ app.get('/signup', (req, res) => {
     res.sendFile('public/signup.html', {root: __dirname})
 })
 
+app.post('/user/create', (req, res) => {
+    if(!dataEditor.validateNewUser(req.body.username, req.body.email)) {
+        res.json({
+            status: '400',
+            message: 'Username or email already taken'
+        })
+    } else {
+        dataEditor.createUser(
+            req.body.username,
+            req.body.email,
+            req.body.password
+        )
+        res.json({
+            status: '200',
+            message: 'account created successfully',
+            token: dataEditor.createAuthToken(req.body.username)
+        })
+    }
+})
+
 app.listen(3000)
