@@ -1,0 +1,23 @@
+{
+  "name": "grabify-clone",
+  "version": "1.0.0",
+  "description": "A clone of the Grabify IP logger built using Node.js",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AjayBhatta16/grabify-clone.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/AjayBhatta16/grabify-clone/issues"
+  },
+  "homepage": "https://github.com/AjayBhatta16/grabify-clone#readme",
+  "dependencies": {
+    "express": "^4.18.1"
+  }
+}
