@@ -1,0 +1,21 @@
+@import url('https://fonts.googleapis.com/css2?family=Righteous&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300&display=swap');
+
+.standard-bg, button {
+    background-color: #6036B7;
+    color: #ccf !important;
+    font-family: 'Roboto', sans-serif;
+}
+
+button {
+    border: 1px solid white !important;
+}
+
+button:hover {
+    transform: scale(1.1);
+}
+
+h1 {
+    font-family: 'Righteous', cursive;
+    font-size: 60px;
+}
