@@ -1,5 +1,1 @@
-{
-    "users": [],
-    "authTokens": [],
-    "links": []
-}
+{"users":[{"username":"test5","email":"abhat1@brockport.edu","password":"abcd1234","links":[]},{"username":"test6","email":"abhat@brockport.edu","password":"abcd1234","links":[]},{"username":"test7","email":"ajay.bhattacharyya.16@gmail.com","password":"abcd1234","links":[]},{"username":"test4","email":"nickmullens@email.com","password":"abcd1234","links":[]}],"authTokens":[{"username":"test6","id":"50e75ff2-ada1-4c13-8d09-c37c418e7a14"},{"username":"test7","id":"ba808641-dcfc-4df0-a555-7fb24648b48b"},{"username":"test4","id":"35e02251-6ad2-4a2f-b22d-5cfb5564302f"}],"links":[]}

@@ -23,11 +23,20 @@ app.get('/signup', (req, res) => {
     res.sendFile('public/signup.html', {root: __dirname})
 })
 
+app.get('/dashboard', (req, res) => {
+    res.sendFile('public/dashboard.html', {root: __dirname})
+})
+
 app.post('/user/create', (req, res) => {
-    if(!dataEditor.validateNewUser(req.body.username, req.body.email)) {
+    if(!dataEditor.validateNewUsername(req.body.username)) {
         res.json({
             status: '400',
-            message: 'Username or email already taken'
+            message: 'Username already taken'
+        })
+    } else if(!dataEditor.validateNewUserEmail(req.body.email)) {
+        res.json({
+            status: '400',
+            message: 'Email already taken'
         })
     } else {
         dataEditor.createUser(
@@ -38,7 +47,7 @@ app.post('/user/create', (req, res) => {
         res.json({
             status: '200',
             message: 'account created successfully',
-            token: dataEditor.createAuthToken(req.body.username)
+            token: dataEditor.generateAuthToken(req.body.username)
         })
     }
 })

@@ -19,3 +19,7 @@ h1 {
     font-family: 'Righteous', cursive;
     font-size: 60px;
 }
+
+#errtxt {
+    color: red;
+}

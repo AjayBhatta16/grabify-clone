@@ -4,9 +4,35 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Signup</title>
+    <title>Sign Up | LinkWire</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="index.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 </head>
-<body>
-    
+<body class="standard-bg">
+    <div class="container-fluid">
+        <div class="d-flex flex-column align-items-center mt-5">
+            <h1>Sign Up</h1>
+            <form onsubmit="event.preventDefault()">
+                <div class="form-group">
+                    <label for="username">Username:</label>
+                    <input type="text" class="form-control" id="username">
+                </div>
+                <div class="form-group">
+                    <label for="email">E-Mail:</label>
+                    <input type="email" class="form-control" id="email">
+                </div>
+                <div class="form-group">
+                    <label for="password">Password:</label>
+                    <input type="password" class="form-control" id="password">
+                </div>
+                <button class="btn mt-3" id="submit">Register</button>
+                <small id="errtxt" class="form-text"></small>
+            </form>
+        </div>
+    </div>
+    <script src="signup.js"></script>
 </body>
 </html>

@@ -27,8 +27,11 @@ class DataEditor {
         })
         this.save()
     }
-    validateNewUser(username, email) {
-        return (this.data.users.filter(user => user.username==username || user.email==email).length == 0)
+    validateNewUsername(username) {
+        return (this.data.users.filter(user => user.username==username).length == 0)
+    }
+    validateNewUserEmail(email) {
+        return (this.data.users.filter(user => user.email==email).length == 0)
     }
     validateNewUUID(id) {
         return !this.data.authTokens.some(token => token.id == id)
