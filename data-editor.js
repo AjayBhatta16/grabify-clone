@@ -53,6 +53,21 @@ class DataEditor {
         this.save()
         return token 
     }
+    checkCredentials(userID, passwd) {
+        let user = this.data.users.filter(usr => usr.password == passwd && (usr.username == userID || usr.email == userID))
+        return user.length > 0 ? generateAuthToken(user[0].username) : false 
+    }
+    checkAuthToken(tokenStr) {
+        let token = JSON.parse(tokenStr)
+        if(this.data.authTokens.filter(t => t.username==token.username && t.id==token.id).length > 0) {
+            return getUser(token.username)
+        } 
+        return false 
+    } 
+    getUser(userID) {
+        let user = this.data.users.filter(usr => usr.username == userID || usr.email == userID)
+        return user[0]
+    }
 }
 
 module.exports = DataEditor

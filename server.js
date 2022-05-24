@@ -52,4 +52,36 @@ app.post('/user/create', (req, res) => {
     }
 })
 
+app.post('/user/verify', (req, res) => {
+    let token = dataEditor.checkCredentials(req.body.userID, req.body.password)
+    if(!token) {
+        res.json({
+            status: '400',
+            message: 'Incorrect user ID or password'
+        })
+    } else {
+        res.json({
+            status: '200',
+            message: 'user logged in successfully',
+            token: token 
+        })
+    }
+})
+
+app.post('/token/verify', (req, res) => {
+    let user = dataEditor.checkAuthToken(req.body.token) 
+    if(!user) {
+        res.json({
+            status: '400',
+            message: 'An invalid token has been provided'
+        })
+    } else {
+        res.json({
+            status: '200',
+            message: 'token validated successfully',
+            user: user 
+        })
+    }
+})
+
 app.listen(3000)
