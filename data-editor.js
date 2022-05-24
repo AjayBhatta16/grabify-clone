@@ -55,12 +55,12 @@ class DataEditor {
     }
     checkCredentials(userID, passwd) {
         let user = this.data.users.filter(usr => usr.password == passwd && (usr.username == userID || usr.email == userID))
-        return user.length > 0 ? generateAuthToken(user[0].username) : false 
+        return user.length > 0 ? this.generateAuthToken(user[0].username) : false 
     }
     checkAuthToken(tokenStr) {
         let token = JSON.parse(tokenStr)
         if(this.data.authTokens.filter(t => t.username==token.username && t.id==token.id).length > 0) {
-            return getUser(token.username)
+            return this.getUser(token.username)
         } 
         return false 
     } 

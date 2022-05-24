@@ -2,12 +2,9 @@ let env = {
     domain: 'localhost:3000'
 }
 
-const emailRe = /.+@.+\..+/
-
 const button = document.querySelector('#submit')
 const errText = document.querySelector('#errtxt')
-const username = document.querySelector('#username')
-const email = document.querySelector('#email')
+const userID = document.querySelector('#userID')
 const password = document.querySelector('#password')
 
 function setErrMsg(errMsg) {
@@ -16,28 +13,19 @@ function setErrMsg(errMsg) {
 
 button.addEventListener('click', (e) => {
     e.preventDefault()
-    if(!username.value || username.value.length == 0) {
-        setErrMsg('Please enter a username')
+    if(!userID.value || userID.value.length == 0) {
+        setErrMsg('Please enter a user ID')
         return
-    }
-    if(!email.value || email.value.length == 0) {
-        setErrMsg('Please enter an email')
-        return 
     }
     if(!password.value || password.value.length == 0) {
         setErrMsg('Please enter a password')
         return 
     }
-    if(!emailRe.test(email.value)) {
-        setErrMsg('Please enter a valid email address')
-        return 
-    }
     let reqData = {
-        username: username.value,
-        email: email.value,
+        userID: userID.value,
         password: password.value
     }
-    fetch(`http://${env.domain}/user/create`, {
+    fetch(`http://${env.domain}/user/verify`, {
         method: "POST",
         headers: {'Content-Type': 'application/json'}, 
         body: JSON.stringify(reqData)
@@ -46,7 +34,7 @@ button.addEventListener('click', (e) => {
     }).then(res => {
         if(res.status == '400') {
             setErrMsg(res.message)
-            return
+            return 
         }
         localStorage.setItem('token', JSON.stringify(res.token))
         window.location = '/dashboard'
