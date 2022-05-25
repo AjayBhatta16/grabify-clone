@@ -27,6 +27,14 @@ app.get('/dashboard', (req, res) => {
     res.sendFile('public/dashboard.html', {root: __dirname})
 })
 
+app.get('/createlink', (req, res) => {
+    res.sendFile('public/createlink.html', {root: __dirname})
+})
+
+app.get('/viewlink', (req, res) => {
+    res.sendFile('public/viewlink.html', {root: __dirname})
+})
+
 app.post('/user/create', (req, res) => {
     if(!dataEditor.validateNewUsername(req.body.username)) {
         res.json({
