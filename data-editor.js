@@ -81,12 +81,12 @@ class DataEditor {
     newTrackingID() {
         let newID = ''
         for(let i = 0; i < 6; i++) {
-            let n = Math.floor(Math.random()*CODECHARS.length)
+            let n = CODECHARS[Math.floor(Math.random()*CODECHARS.length)]
             newID += n 
         }
         while(this.getLinkByTrackingID(newID)) {
             for(let i = 0; i < 6; i++) {
-                let n = Math.floor(Math.random()*CODECHARS.length)
+                let n = CODECHARS[Math.floor(Math.random()*CODECHARS.length)]
                 newID += n 
             }
         }

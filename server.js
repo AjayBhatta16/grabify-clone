@@ -77,7 +77,7 @@ app.post('/user/verify', (req, res) => {
 })
 
 app.post('/token/verify', (req, res) => {
-    let user = dataEditor.checkAuthToken(req.body.token) 
+    let user = {...dataEditor.checkAuthToken(req.body.token)} 
     if(!user) {
         res.json({
             status: '400',
@@ -86,7 +86,6 @@ app.post('/token/verify', (req, res) => {
     } else {
         user.links = user.links.map(linkID => {
             let link = dataEditor.getLinkByTrackingID(linkID)
-            console.log(link)
             return {
                 id: linkID,
                 note: link.note,
