@@ -1,6 +1,8 @@
 const fs = require('fs')
 const uuid = require('uuid')
 
+const CODECHARS = ('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789').split('')
+
 class DataEditor {
     constructor(dataFile) {
         this.dataFile = dataFile
@@ -70,7 +72,55 @@ class DataEditor {
     }
     getLinkByTrackingID(linkID) {
         let link = this.data.links.filter(link => link.trackingID == linkID)
-        return link[0]
+        return link.length > 0 ? link[0] : false
+    }
+    getLinkByRedirectID(linkID) {
+        let link = this.data.links.filter(link => link.redirectID == linkID)
+        return link.length > 0 ? link[0] : false
+    }
+    newTrackingID() {
+        let newID = ''
+        for(let i = 0; i < 6; i++) {
+            let n = Math.floor(Math.random()*CODECHARS.length)
+            newID += n 
+        }
+        while(this.getLinkByTrackingID(newID)) {
+            for(let i = 0; i < 6; i++) {
+                let n = Math.floor(Math.random()*CODECHARS.length)
+                newID += n 
+            }
+        }
+        return newID
+    }
+    newRedirectID() {
+        let newID = ''
+        for(let i = 0; i < 6; i++) {
+            let n = Math.floor(Math.random()*CODECHARS.length)
+            newID += n 
+        }
+        while(this.getLinkByRedirectID(newID)) {
+            for(let i = 0; i < 6; i++) {
+                let n = Math.floor(Math.random()*CODECHARS.length)
+                newID += n 
+            }
+        }
+        return newID
+    }
+    createLink(username, targetURL, note) {
+        let newLink = {
+            trackingID: this.newTrackingID(),
+            redirectID: this.newRedirectID(),
+            targetURL: targetURL,
+            note: note,
+            clicks: []
+        }
+        this.data.links.push(newLink)
+        this.data.users.forEach(user => {
+            if(user.username == username) {
+                user.links.push(newLink.trackingID)
+            }
+        })
+        return newLink
     }
 }
 

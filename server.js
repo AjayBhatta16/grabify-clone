@@ -100,4 +100,21 @@ app.post('/token/verify', (req, res) => {
     }
 })
 
+app.post('/link/create', (req, res) => {
+    let user = dataEditor.checkAuthToken(req.body.token)
+    if(!user) {
+        res.json({
+            status: '400',
+            message: 'An invalid token has been provided'
+        })
+    } else {
+        let link = dataEditor.createLink(JSON.parse(req.body.token).username, req.body.targetURL, req.body.note)
+        res.json({
+            status: '200',
+            message: 'Link created successfully',
+            link: link 
+        })
+    }
+})
+
 app.listen(3000)
