@@ -84,6 +84,14 @@ app.post('/token/verify', (req, res) => {
             message: 'An invalid token has been provided'
         })
     } else {
+        user.links = user.links.map(linkID => {
+            let link = dataEditor.getLinkByTrackingID(linkID)
+            return {
+                id: linkID,
+                note: link.note,
+                numClicks: link.clicks.length
+            }
+        })
         res.json({
             status: '200',
             message: 'token validated successfully',

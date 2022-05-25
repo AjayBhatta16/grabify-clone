@@ -68,6 +68,10 @@ class DataEditor {
         let user = this.data.users.filter(usr => usr.username == userID || usr.email == userID)
         return user[0]
     }
+    getLinkByTrackingID(linkID) {
+        let link = this.data.links.filter(link => link.trackingID == linkID)
+        return link[0]
+    }
 }
 
 module.exports = DataEditor
