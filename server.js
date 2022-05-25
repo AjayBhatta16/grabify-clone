@@ -86,6 +86,7 @@ app.post('/token/verify', (req, res) => {
     } else {
         user.links = user.links.map(linkID => {
             let link = dataEditor.getLinkByTrackingID(linkID)
+            console.log(link)
             return {
                 id: linkID,
                 note: link.note,

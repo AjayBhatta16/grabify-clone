@@ -95,12 +95,12 @@ class DataEditor {
     newRedirectID() {
         let newID = ''
         for(let i = 0; i < 6; i++) {
-            let n = Math.floor(Math.random()*CODECHARS.length)
+            let n = CODECHARS[Math.floor(Math.random()*CODECHARS.length)]
             newID += n 
         }
         while(this.getLinkByRedirectID(newID)) {
             for(let i = 0; i < 6; i++) {
-                let n = Math.floor(Math.random()*CODECHARS.length)
+                let n = CODECHARS[Math.floor(Math.random()*CODECHARS.length)]
                 newID += n 
             }
         }
@@ -120,6 +120,7 @@ class DataEditor {
                 user.links.push(newLink.trackingID)
             }
         })
+        this.save()
         return newLink
     }
 }

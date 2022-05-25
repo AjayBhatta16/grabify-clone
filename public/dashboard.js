@@ -30,7 +30,7 @@ function populateLinks(links) {
                 <tr>
                     <td colspan="1">${i}</td>
                     <td colspan="1"><a href="/viewlink?id=${link.id}">${link.id}</a></td>
-                    <td colspan="2">${link.note.length > 0 ? link.note : 'none'}</td>
+                    <td colspan="2">${(link.note && link.note.length > 0) ? link.note : 'none'}</td>
                     <td colspan="1">${link.numClicks}</td>
                 </tr>
             `
