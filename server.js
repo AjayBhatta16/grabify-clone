@@ -8,6 +8,7 @@ app.use(cors())
 app.use(express.json())
 app.use(express.urlencoded({extended: true}))
 app.use(express.static(__dirname + '/public'))
+app.set('view engine','ejs')
 
 let dataEditor = new DataEditor('./data.json')
 
@@ -31,8 +32,8 @@ app.get('/createlink', (req, res) => {
     res.sendFile('public/createlink.html', {root: __dirname})
 })
 
-app.get('/viewlink', (req, res) => {
-    res.sendFile('public/viewlink.html', {root: __dirname})
+app.get('/viewlink/:id', (req, res) => {
+    res.render('viewlink', {link: JSON.stringify(dataEditor.getLinkByTrackingID(req.params.id))})
 })
 
 app.post('/user/create', (req, res) => {
