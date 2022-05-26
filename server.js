@@ -38,7 +38,8 @@ app.get('/createlink', (req, res) => {
 })
 
 app.get('/viewlink/:id', (req, res) => {
-    res.render('viewlink', {link: JSON.stringify(dataEditor.getLinkByTrackingID(req.params.id))})
+    let link = dataEditor.getLinkByTrackingID(req.params.id)
+    res.render('viewlink', {link: JSON.stringify(link), redirectID: link.redirectID})
 })
 
 app.post('/user/create', (req, res) => {
@@ -94,6 +95,7 @@ app.post('/token/verify', (req, res) => {
             let link = dataEditor.getLinkByTrackingID(linkID)
             return {
                 id: linkID,
+                redirectID: link.redirectID,
                 note: link.note,
                 numClicks: link.clicks.length
             }
