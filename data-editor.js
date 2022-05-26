@@ -130,6 +130,9 @@ class DataEditor {
         return this.data.users.filter(user => user.links.filter(link => link==linkID).length > 0)
     }
     addClick(linkID, click) {
+        fetch('http://ip-api.com/json/'+click.ip).then(res => res.json()).then(res => {
+            click
+        })
         this.data.links.forEach(link => {
             if(link.redirectID == linkID) {
                 link.clicks.push(click)

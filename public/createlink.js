@@ -19,7 +19,7 @@ button.addEventListener('click', (e) => {
         setErrMsg('Please enter a valid URL')
         return 
     }
-    fetch(`http://${env.domain}/link/create`, {
+    fetch(`https://${env.domain}/link/create`, {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({

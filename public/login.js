@@ -21,7 +21,7 @@ button.addEventListener('click', (e) => {
         userID: userID.value,
         password: password.value
     }
-    fetch(`http://${env.domain}/user/verify`, {
+    fetch(`https://${env.domain}/user/verify`, {
         method: "POST",
         headers: {'Content-Type': 'application/json'}, 
         body: JSON.stringify(reqData)
