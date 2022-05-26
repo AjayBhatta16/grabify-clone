@@ -107,6 +107,9 @@ class DataEditor {
         return newID
     }
     createLink(username, targetURL, note) {
+        if(targetURL.indexOf('http://') != 0 && targetURL.indexOf('https://') == 0) {
+            targetURL = 'http://' + targetURL
+        }
         let newLink = {
             trackingID: this.newTrackingID(),
             redirectID: this.newRedirectID(),
@@ -122,6 +125,17 @@ class DataEditor {
         })
         this.save()
         return newLink
+    }
+    getUserByLinkRedirect(linkID) {
+        return this.data.users.filter(user => user.links.filter(link => link==linkID).length > 0)
+    }
+    addClick(linkID, click) {
+        this.data.links.forEach(link => {
+            if(link.redirectID == linkID) {
+                link.clicks.push(click)
+            }
+        })
+        this.save()
     }
 }
 

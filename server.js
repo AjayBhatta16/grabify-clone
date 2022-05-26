@@ -2,6 +2,9 @@ const express = require('express')
 const cors = require('cors')
 const requestIp = require('request-ip')
 const DataEditor = require('./data-editor')
+const scrape = require('./scraper')
+const sendMail = require('./mailer')
+const DeviceDetector = require('node-device-detector')
 
 const app = express()
 app.use(cors())
@@ -10,10 +13,30 @@ app.use(express.urlencoded({extended: true}))
 app.use(express.static(__dirname + '/public'))
 app.set('view engine','ejs')
 
+let detector = new DeviceDetector()
+
 let dataEditor = new DataEditor('./data.json')
 
 app.get('/', (req, res) => {
     res.sendFile('public/index.html', {root: __dirname})
+})
+
+app.get('/:id', async (req, res) => {
+    let link = dataEditor.getLinkByRedirectID(req.params.id)
+    let user = dataEditor.getUserByLinkRedirect(req.params.id)
+    let userAgent = req.get('User-Agent')
+    let device = detector.detect(userAgent)
+    let click = {
+        ip: requestIp.getClientIp(req),
+        userAgent: userAgent,
+        os: `${device.os.name} ${device.os.version}`,
+        client: `${device.client.type} - ${device.client.name} ${device.client.version}`,
+        device: `${device.device.type} - ${device.device.type} ${device.device.model}`
+    }
+    sendMail(user, click)
+    dataEditor.addClick(req.params.id, click)
+    let urlData = await scrape(link.targetURL)
+    res.render('redirect', {targetURL: link.targetURL, title: urlData.title})
 })
 
 app.get('/login', (req, res) => {
