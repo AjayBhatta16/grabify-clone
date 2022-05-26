@@ -17,7 +17,7 @@ if(link.clicks.length == 0) {
         modals.innerHTML += `
         <div class="modal fade" id="modal${i+1}" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
             <div class="modal-dialog" role="document">
-                <div class="modal-content">
+                <div class="modal-content bg-dark">
                     <div class="modal-header">
                         <h5 class="modal-title" id="exampleModalLabel">IP Log Info</h5>
                         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
@@ -39,7 +39,7 @@ if(link.clicks.length == 0) {
         tbody.innerHTML += `
             <tr>
                 <td>${i+1}</td>
-                <td>${link.date.toString().split(' (')[0]}</td>
+                <td>${(new Date(link.date)).toString().split(' (')[0]}</td>
                 <td>${link.ip}</td>
                 <td>
                     <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#modal${i+1}">

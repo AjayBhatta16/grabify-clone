@@ -1,10 +1,10 @@
 var mail = require('nodemailer');
 
 var transporter = mail.createTransport({
-    service: 'gmail',
+    service: 'Yahoo',
     auth: {
-        user: 'linkwiretracker@gmail.com',
-        pass: 'fuckscammers'
+        user: 'linkwiretracking@yahoo.com',
+        pass: 'dkiuxueeyuexlhhs'
     }
 })
 

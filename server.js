@@ -21,24 +21,6 @@ app.get('/', (req, res) => {
     res.sendFile('public/index.html', {root: __dirname})
 })
 
-app.get('/:id', async (req, res) => {
-    let link = dataEditor.getLinkByRedirectID(req.params.id)
-    let user = dataEditor.getUserByLinkRedirect(req.params.id)
-    let userAgent = req.get('User-Agent')
-    let device = detector.detect(userAgent)
-    let click = {
-        ip: requestIp.getClientIp(req),
-        userAgent: userAgent,
-        os: `${device.os.name} ${device.os.version}`,
-        client: `${device.client.type} - ${device.client.name} ${device.client.version}`,
-        device: `${device.device.type} - ${device.device.type} ${device.device.model}`
-    }
-    sendMail(user, click)
-    dataEditor.addClick(req.params.id, click)
-    let urlData = await scrape(link.targetURL)
-    res.render('redirect', {targetURL: link.targetURL, title: urlData.title})
-})
-
 app.get('/login', (req, res) => {
     res.sendFile('public/login.html', {root: __dirname})
 })
@@ -139,6 +121,26 @@ app.post('/link/create', (req, res) => {
             link: link 
         })
     }
+})
+
+app.get('/:id', async (req, res) => {
+    let link = dataEditor.getLinkByRedirectID(req.params.id)
+    let user = dataEditor.getUserByLinkRedirect(req.params.id)
+    let userAgent = req.get('User-Agent')
+    let device = detector.detect(userAgent)
+    let click = {
+        date: Date.now(),
+        ip: requestIp.getClientIp(req),
+        userAgent: userAgent,
+        os: `${device.os.name} ${device.os.version}`,
+        client: `${device.client.type} - ${device.client.name} ${device.client.version}`,
+        device: `${device.device.type} - ${device.device.type} ${device.device.model}`
+    }
+    // TODO: FIX
+    // sendMail(user, click)
+    dataEditor.addClick(req.params.id, click)
+    let urlData = await scrape(link.targetURL)
+    res.render('redirect', {targetURL: link.targetURL, title: urlData.title})
 })
 
 app.listen(3000)
