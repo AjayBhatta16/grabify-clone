@@ -1,7 +1,3 @@
-let env = {
-    domain: 'localhost:3000'
-}
-
 const emailRe = /.+@.+\..+/
 
 const button = document.querySelector('#submit')

@@ -1,7 +1,3 @@
-let env = {
-    domain: 'localhost:3000'
-}
-
 const button = document.querySelector('#submit')
 const errText = document.querySelector('#errtxt')
 const userID = document.querySelector('#userID')

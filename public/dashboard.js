@@ -1,7 +1,3 @@
-let env = {
-    domain: 'localhost:3000'
-}
-
 fetch(`http://${env.domain}/token/verify`, {
     method: "POST",
     headers: {'Content-Type': 'application/json'}, 

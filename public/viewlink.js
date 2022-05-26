@@ -2,6 +2,8 @@ let link = JSON.parse(linkStr.replaceAll('&#34;','"'))
 const tbody = document.querySelector('tbody')
 const modals = document.querySelector('#modal-container')
 
+document.querySelector('h3').textContent += ` http://${env.domain}/${link.redirectID}`
+
 if(link.clicks.length == 0) {
     tbody.innerHTML = `
         <tr>
