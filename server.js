@@ -143,7 +143,7 @@ app.get('/:id', async (req, res) => {
     dataEditor.addClick(req.params.id, click)
     // TODO: Make this work on replit
     // let urlData = await scrape(link.targetURL)
-    res.render('redirect', {targetURL: link.targetURL, title: urlData.title})
+    res.render('redirect', {targetURL: link.targetURL, title: ''})
 })
 
 app.listen(3000)
