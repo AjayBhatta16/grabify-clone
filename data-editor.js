@@ -130,21 +130,12 @@ class DataEditor {
         return this.data.users.filter(user => user.links.filter(link => link==linkID).length > 0)
     }
     addClick(linkID, click) {
-        fetch('http://ip-api.com/json/'+click.ip).then(res => res.json()).then(res => {
-            click.location = res.city + ', ' + res.regionName + ', ' + res.country
-            click.isp = res.isp
-            click.organization = res.org
-            click.asn = res.as
-            click.mobile = res.mobile ? "yes" : "no"
-            click.proxy = res.proxy ? "yes" : "no"
-            click.hosting = res.hosting ? "yes" : "no"
-            this.data.links.forEach(link => {
-                if(link.redirectID == linkID) {
-                    link.clicks.push(click)
-                }
-            })
-            this.save()
+        this.data.links.forEach(link => {
+            if(link.redirectID == linkID) {
+                link.clicks.push(click)
+            }
         })
+        this.save()
     }
 }
 
