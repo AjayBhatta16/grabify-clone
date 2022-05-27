@@ -1,3 +1,3 @@
 const env = {
-    domain: 'localhost:3000'
+    domain: 'grabify-clone.ajaybhatta49.repl.co'
 }
