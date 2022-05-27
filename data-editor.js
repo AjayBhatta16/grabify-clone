@@ -140,7 +140,7 @@ class DataEditor {
         this.save()
     }
     getIPData(click) {
-        http.get('http://ip-api.com/json/172.101.158.242?fields=status,message,city,regionName,country,isp,org,as,mobile,proxy,hosting', res => {
+        http.get(`http://ip-api.com/json/${click.ip}?fields=status,message,city,regionName,country,isp,org,as,mobile,proxy,hosting`, res => {
             let data = ''
             res.on('data', chunk => {
                 data += chunk
