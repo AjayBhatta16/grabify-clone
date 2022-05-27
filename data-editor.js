@@ -1,5 +1,6 @@
 const fs = require('fs')
 const uuid = require('uuid')
+const http = require('http')
 
 const CODECHARS = ('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789').split('')
 
@@ -133,9 +134,31 @@ class DataEditor {
         this.data.links.forEach(link => {
             if(link.redirectID == linkID) {
                 link.clicks.push(click)
+                this.getIPData(link.clicks[link.clicks.length-1])
             }
         })
         this.save()
+    }
+    getIPData(click) {
+        http.get('http://ip-api.com/json/172.101.158.242?fields=status,message,city,regionName,country,isp,org,as,mobile,proxy,hosting', res => {
+            let data = ''
+            res.on('data', chunk => {
+                data += chunk
+            })
+            res.on('end', () => {
+                let dataObj = JSON.parse(data)
+                click.location = dataObj.city + ', ' + dataObj.regionName + ', ' + dataObj.country
+                click.isp = dataObj.isp
+                click.organization = dataObj.org
+                click.asn = dataObj.as
+                click.mobile = dataObj.mobile ? "yes" : "no"
+                click.proxy = dataObj.proxy ? "yes" : "no"
+                click.hosting = dataObj.hosting ? "yes" : "no"
+                this.save()
+            })
+        }).on('error', err => {
+            console.log(err)
+        })
     }
 }
 
