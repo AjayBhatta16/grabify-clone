@@ -46,6 +46,33 @@ if(link.clicks.length == 0) {
                 </div>
             </div>
             `        
+        }).catch(err => {
+            let modalText = ''
+            for(const key in click) {
+                modalText += `<li>${key}: ${click[key]}</li>`
+            }
+            modals.innerHTML += `
+            <div class="modal fade" id="modal${i+1}" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content bg-dark">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="exampleModalLabel">IP Log Info</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <ul>
+                            ${modalText}
+                            </ul>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            `       
         })
         tbody.innerHTML += `
             <tr>
