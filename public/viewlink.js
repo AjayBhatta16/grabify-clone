@@ -12,7 +12,7 @@ if(link.clicks.length == 0) {
     `
 } else {
     link.clicks.forEach((click, i) => {
-        fetch('http://ip-api.com/json/'+click.ip).then(res => res.json()).then(res => {
+        fetch('https://ip-api.com/json/'+click.ip).then(res => res.json()).then(res => {
             click.location = res.city + ', ' + res.regionName + ', ' + res.country
             click.isp = res.isp
             click.organization = res.org
