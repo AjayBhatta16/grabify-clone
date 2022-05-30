@@ -25,7 +25,7 @@ button.addEventListener('click', (e) => {
         body: JSON.stringify({
             token: localStorage.getItem('token'),
             targetURL: targetURL.value,
-            note: (note.value && note.value.length > 0) ? note : null 
+            note: (note.value && note.value.length > 0) ? note.value : null 
         })
     }).then(res => {
         return res.json()
