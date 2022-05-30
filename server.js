@@ -146,4 +146,4 @@ app.get('/:id', async (req, res) => {
     res.render('redirect', {targetURL: link.targetURL, title: ''})
 })
 
-app.listen(3000)
+app.listen(process.env.PORT || 5000)
