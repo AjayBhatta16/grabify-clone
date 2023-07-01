@@ -1,14 +1,38 @@
 const fs = require('fs')
 const uuid = require('uuid')
 const http = require('http')
+const sqlite3 = require('sqlite3').verbose()
 
 const CODECHARS = ('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789').split('')
 
 class DataEditor {
-    constructor(dataFile) {
-        this.dataFile = dataFile
-        this.data = ''
-        this.openDataFile()
+    constructor() {
+        if(fs.existsSync('./appdata.db')) {
+            this.db = new sqlite3.Database('./appdata.db', err => {
+                if(err) {
+                    console.log(`ERROR Opening Existing Database: ${err}`)
+                }
+                console.log('SUCCESS: Connected to database appdata.db')
+            })
+        } else {
+            this.db = new sqlite3.Database('./appdata.db', err => {
+                if(err) {
+                    console.log(`ERROR Creating Database: ${err}`)
+                }
+                console.log('SUCCESS: Created and connected to database')
+            })
+            this.db.run(fs.readFileSync('./sql/create-user-table.sql', 'utf-8'))
+            this.db.run(fs.readFileSync('./sql/create-link-table.sql', 'utf-8'))
+            this.db.run(fs.readFileSync('./sql/create-click-table.sql', 'utf-8'))
+        }
+    }
+    closeDB() {
+        this.db.close(err => {
+            if(err) {
+                console.log(`ERROR Closing Database: ${err}`)
+            }
+            console.log('Database connection closed')
+        })
     }
     openDataFile() {
         fs.readFile(this.dataFile, (err, data) => {

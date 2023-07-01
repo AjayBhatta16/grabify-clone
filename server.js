@@ -15,7 +15,7 @@ app.set('view engine','ejs')
 
 let detector = new DeviceDetector()
 
-let dataEditor = new DataEditor('./data.json')
+let dataEditor = new DataEditor()
 
 app.get('/', (req, res) => {
     res.sendFile('public/index.html', {root: __dirname})
@@ -146,4 +146,6 @@ app.get('/:id', async (req, res) => {
     res.render('redirect', {targetURL: link.targetURL, title: ''})
 })
 
-app.listen(process.env.PORT || 5000)
+app.on('close', () => dataEditor.closeDB())
+
+app.listen(process.env.PORT || 5001)
