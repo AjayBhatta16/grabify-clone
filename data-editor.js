@@ -7,6 +7,7 @@ const CODECHARS = ('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789').split('')
 
 class DataEditor {
     constructor() {
+        this.authTokens = []
         if(fs.existsSync('./appdata.db')) {
             this.db = new sqlite3.Database('./appdata.db', err => {
                 if(err) {
@@ -34,34 +35,38 @@ class DataEditor {
             console.log('Database connection closed')
         })
     }
-    openDataFile() {
-        fs.readFile(this.dataFile, (err, data) => {
-            if(err) throw err
-            this.data = JSON.parse(data)
-        })
-    }
     save() {
         fs.writeFile(this.dataFile, JSON.stringify(this.data), err => {
             if(err) console.log(err)
         })
     }
     createUser(username, email, password) {
-        this.data.users.push({
-            username: username,
-            email: email,
-            password: password,
-            links: []
-        })
-        this.save()
+        this.db.run(
+            fs.readFileSync('./sql/insert-user.sql', 'utf-8'),
+            [username, password, email]
+        )
+        //this.save()
     }
     validateNewUsername(username) {
-        return (this.data.users.filter(user => user.username==username).length == 0)
+        let found = false
+        this.db.get(fs.readFileSync('./sql/select-user-duplicate-name.sql', 'utf-8'), [username], (err, row) => {
+            if(row) {
+                found = true
+            }
+        })
+        return !found
     }
     validateNewUserEmail(email) {
-        return (this.data.users.filter(user => user.email==email).length == 0)
+        let found = false 
+        this.db.get(fs.readFileSync('./sql/select-user-duplicate-email.sql', 'utf-8'), [email], (err, row) => {
+            if(row) {
+                found = true 
+            }
+        })
+        return !found 
     }
     validateNewUUID(id) {
-        return !this.data.authTokens.some(token => token.id == id)
+        return !this.authTokens.some(token => token.id == id)
     }
     generateNewUUID() {
         let id = uuid.v4()
@@ -76,24 +81,47 @@ class DataEditor {
             username: username,
             id: id
         }
-        this.data.authTokens.push(token)
-        this.save()
+        this.authTokens.push(token)
         return token 
     }
     checkCredentials(userID, passwd) {
-        let user = this.data.users.filter(usr => usr.password == passwd && (usr.username == userID || usr.email == userID))
-        return user.length > 0 ? this.generateAuthToken(user[0].username) : false 
+        let found = false, username="init"
+        this.db.get(fs.readFileSync('./sql/select-user-for-auth.sql', 'utf-8'), [userID, passwd], (err, row) => {
+            if(row) {
+                found = true 
+                username = row.username
+            }
+        })
+        return found ? this.generateAuthToken(username) : false
     }
     checkAuthToken(tokenStr) {
         let token = JSON.parse(tokenStr)
-        if(this.data.authTokens.filter(t => t.username==token.username && t.id==token.id).length > 0) {
+        if(this.authTokens.filter(t => t.username==token.username && t.id==token.id).length > 0) {
             return this.getUser(token.username)
         } 
         return false 
     } 
     getUser(userID) {
-        let user = this.data.users.filter(usr => usr.username == userID || usr.email == userID)
-        return user[0]
+        let user = {}
+        this.db.get(fs.readFileSync('./sql/select-user-full.sql', 'utf-8'), [userID, userID], (err, row) => {
+            if(row) {
+                user.username = row.username
+                user.email = row.email
+                user.passwd = row.passwd
+                user.links = []
+            }
+        })
+        if(user.username) {
+            this.db.all(fs.readFileSync('./sql/select-links-for-user.sql', 'utf-8'), [user.username], (err, rows) => {
+                rows.forEach(row => {
+                    user.push({
+                        trackingID: row.trackingID,
+                        
+                    })
+                })
+            })
+        }
+        return user
     }
     getLinkByTrackingID(linkID) {
         let link = this.data.links.filter(link => link.trackingID == linkID)
