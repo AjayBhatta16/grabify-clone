@@ -48,22 +48,18 @@ class DataEditor {
         //this.save()
     }
     validateNewUsername(username) {
-        let found = false
-        this.db.get(fs.readFileSync('./sql/select-user-duplicate-name.sql', 'utf-8'), [username], (err, row) => {
-            if(row) {
-                found = true
-            }
+        return new Promise((resolve, reject) => {
+            this.db.get(fs.readFileSync('./sql/select-user-duplicate-name.sql', 'utf-8'), [username], (err, row) => {
+                resolve(!!row)
+            })
         })
-        return !found
     }
     validateNewUserEmail(email) {
-        let found = false 
-        this.db.get(fs.readFileSync('./sql/select-user-duplicate-email.sql', 'utf-8'), [email], (err, row) => {
-            if(row) {
-                found = true 
-            }
+        return new Promise((resolve, reject) => {
+            this.db.get(fs.readFileSync('./sql/select-user-duplicate-email.sql', 'utf-8'), [email], (err, row) => {
+                resolve(!!row)
+            })
         })
-        return !found 
     }
     validateNewUUID(id) {
         return !this.authTokens.some(token => token.id == id)
@@ -85,43 +81,39 @@ class DataEditor {
         return token 
     }
     checkCredentials(userID, passwd) {
-        let found = false, username="init"
-        this.db.get(fs.readFileSync('./sql/select-user-for-auth.sql', 'utf-8'), [userID, passwd], (err, row) => {
-            if(row) {
-                found = true 
-                username = row.username
-            }
+        return new Promise((resolve, reject) => {
+            this.db.get(fs.readFileSync('./sql/select-user-for-auth.sql', 'utf-8'), [userID, passwd], (err, row) => {
+                resolve(!!row ? this.generateAuthToken(row.username) : false)
+            })
         })
-        return found ? this.generateAuthToken(username) : false
     }
-    checkAuthToken(tokenStr) {
+    async checkAuthToken(tokenStr) {
         let token = JSON.parse(tokenStr)
         if(this.authTokens.filter(t => t.username==token.username && t.id==token.id).length > 0) {
-            return this.getUser(token.username)
+            return await this.getUser(token.username)
         } 
         return false 
     } 
-    getUser(userID) {
-        let user = {}
-        this.db.get(fs.readFileSync('./sql/select-user-full.sql', 'utf-8'), [userID, userID], (err, row) => {
-            if(row) {
-                user.username = row.username
-                user.email = row.email
-                user.passwd = row.passwd
-                user.links = []
-            }
-        })
-        if(user.username) {
-            this.db.all(fs.readFileSync('./sql/select-links-for-user.sql', 'utf-8'), [user.username], (err, rows) => {
-                rows.forEach(row => {
-                    user.push({
-                        trackingID: row.trackingID,
-                        
-                    })
-                })
+    async getUser(userID) {
+        return new Promise(async (resolve, reject) => {
+            let user = {}
+            this.db.get(fs.readFileSync('./sql/select-user-full.sql', 'utf-8'), [userID, userID], async (err, row) => {
+                if(row) {
+                    user.username = row.username
+                    user.email = row.email
+                    user.passwd = row.passwd
+                    user.links = await this.getLinksByUser(user.username)
+                    resolve(user)
+                }
             })
-        }
-        return user
+        })
+    }
+    async getLinksByUser(username) {
+        return new Promise((resolve, reject) => {
+            this.db.all(fs.readFileSync('./sql/select-links-for-user.sql', 'utf-8'), [username], (err, rows) => {
+                resolve(rows.map(row => row.trackingID))
+            })
+        })
     }
     getLinkByTrackingID(linkID) {
         let link = this.data.links.filter(link => link.trackingID == linkID)

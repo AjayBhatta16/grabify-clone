@@ -42,19 +42,22 @@ app.get('/viewlink/:id', (req, res) => {
     res.render('viewlink', {link: JSON.stringify(link), redirectID: link.redirectID})
 })
 
-app.post('/user/create', (req, res) => {
-    if(!dataEditor.validateNewUsername(req.body.username)) {
+app.post('/user/create', async (req, res) => {
+    let unameFound = await dataEditor.validateNewUsername(req.body.username)
+    let emailFound = await dataEditor.validateNewUserEmail(req.body.email)
+    if(unameFound) {
+        console.log("duplicate username")
         res.json({
             status: '400',
             message: 'Username already taken'
         })
-    } else if(!dataEditor.validateNewUserEmail(req.body.email)) {
+    } else if(emailFound) {
         res.json({
             status: '400',
             message: 'Email already taken'
         })
     } else {
-        dataEditor.createUser(
+        await dataEditor.createUser(
             req.body.username,
             req.body.email,
             req.body.password
@@ -67,8 +70,8 @@ app.post('/user/create', (req, res) => {
     }
 })
 
-app.post('/user/verify', (req, res) => {
-    let token = dataEditor.checkCredentials(req.body.userID, req.body.password)
+app.post('/user/verify', async (req, res) => {
+    let token = await dataEditor.checkCredentials(req.body.userID, req.body.password)
     if(!token) {
         res.json({
             status: '400',
@@ -83,8 +86,8 @@ app.post('/user/verify', (req, res) => {
     }
 })
 
-app.post('/token/verify', (req, res) => {
-    let user = {...dataEditor.checkAuthToken(req.body.token)} 
+app.post('/token/verify', async (req, res) => {
+    let user = await dataEditor.checkAuthToken(req.body.token)
     if(!user) {
         res.json({
             status: '400',

@@ -1,3 +1,4 @@
 const env = {
-    domain: 'linkwire.herokuapp.com'
+    domain: 'localhost:5001',
+    proto: 'http'
 }
