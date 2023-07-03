@@ -94,15 +94,17 @@ app.post('/token/verify', async (req, res) => {
             message: 'An invalid token has been provided'
         })
     } else {
-        user.links = user.links.map(linkID => {
-            let link = dataEditor.getLinkByTrackingID(linkID)
+        user.links = await Promise.all(user.links.map(async (linkID) => {
+            let link = await dataEditor.getLinkByTrackingID(linkID)
+            let clickCount = await dataEditor.getClickCount(linkID)
             return {
                 id: linkID,
                 redirectID: link.redirectID,
+                targetURL: link.targetURL,
                 note: link.note,
-                numClicks: link.clicks.length
+                numClicks: clickCount
             }
-        })
+        }))
         res.json({
             status: '200',
             message: 'token validated successfully',
@@ -111,7 +113,7 @@ app.post('/token/verify', async (req, res) => {
     }
 })
 
-app.post('/link/create', (req, res) => {
+app.post('/link/create', async (req, res) => {
     let user = dataEditor.checkAuthToken(req.body.token)
     if(!user) {
         res.json({
@@ -119,7 +121,7 @@ app.post('/link/create', (req, res) => {
             message: 'An invalid token has been provided'
         })
     } else {
-        let link = dataEditor.createLink(JSON.parse(req.body.token).username, req.body.targetURL, req.body.note)
+        let link = await dataEditor.createLink(JSON.parse(req.body.token).username, req.body.targetURL, req.body.note)
         res.json({
             status: '200',
             message: 'Link created successfully',

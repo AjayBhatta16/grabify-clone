@@ -115,60 +115,94 @@ class DataEditor {
             })
         })
     }
-    getLinkByTrackingID(linkID) {
-        let link = this.data.links.filter(link => link.trackingID == linkID)
-        return link.length > 0 ? link[0] : false
+    async getLinkByTrackingID(linkID) {
+        return new Promise((resolve, reject) => {
+            this.db.get(fs.readFileSync('./sql/select-link-by-tracking.sql', 'utf-8'), [linkID], async (err, row) => {
+                if(!!row) {
+                    resolve({
+                        trackingID: row.trackingID,
+                        redirectID: row.redirectID,
+                        targetURL: row.targetURL,
+                        notes: row.notes
+                    })
+                } else {
+                    resolve(false)
+                }
+            })
+        })
+    }
+    async getClickCount(linkID) {
+        return new Promise((resolve, reject) => {
+            this.db.all(fs.readFileSync('./sql/select-click-by-link.sql', 'utf-8'), [linkID], (err, rows) => {
+                resolve(!!rows ? rows.length : 0)
+            })
+        })
     }
     getLinkByRedirectID(linkID) {
-        let link = this.data.links.filter(link => link.redirectID == linkID)
-        return link.length > 0 ? link[0] : false
+        return new Promise((resolve, reject) => {
+            this.db.get(fs.readFileSync('./sql/select-link-by-redirect.sql', 'utf-8'), [linkID], async (err, row) => {
+                if(!!row) {
+                    resolve({
+                        trackingID: row.trackingID,
+                        redirectID: row.redirectID,
+                        targetURL: row.targetURL,
+                        notes: row.notes
+                    })
+                } else {
+                    resolve(false)
+                }
+            })
+        })
     }
-    newTrackingID() {
+    async newTrackingID() {
         let newID = ''
         for(let i = 0; i < 6; i++) {
             let n = CODECHARS[Math.floor(Math.random()*CODECHARS.length)]
             newID += n 
         }
-        while(this.getLinkByTrackingID(newID)) {
+        let duplicate = await this.getLinkByTrackingID(newID)
+        while(duplicate) {
             for(let i = 0; i < 6; i++) {
                 let n = CODECHARS[Math.floor(Math.random()*CODECHARS.length)]
                 newID += n 
             }
+            duplicate = await this.getLinkByTrackingID(newID)
         }
         return newID
     }
-    newRedirectID() {
+    async newRedirectID() {
         let newID = ''
         for(let i = 0; i < 6; i++) {
             let n = CODECHARS[Math.floor(Math.random()*CODECHARS.length)]
             newID += n 
         }
-        while(this.getLinkByRedirectID(newID)) {
+        let duplicate = await this.getLinkByRedirectID(newID)
+        while(duplicate) {
             for(let i = 0; i < 6; i++) {
                 let n = CODECHARS[Math.floor(Math.random()*CODECHARS.length)]
                 newID += n 
             }
+            duplicate = await this.getLinkByRedirectID(newID)
         }
         return newID
     }
-    createLink(username, targetURL, note) {
+    async createLink(username, targetURL, note) {
         if(targetURL.indexOf('http://') != 0 && targetURL.indexOf('https://') == 0) {
             targetURL = 'http://' + targetURL
         }
+        let newTrackingID = await this.newTrackingID()
+        let newRedirectID = await this.newRedirectID()
         let newLink = {
-            trackingID: this.newTrackingID(),
-            redirectID: this.newRedirectID(),
+            trackingID: newTrackingID,
+            redirectID: newRedirectID,
             targetURL: targetURL,
             note: note,
             clicks: []
         }
-        this.data.links.push(newLink)
-        this.data.users.forEach(user => {
-            if(user.username == username) {
-                user.links.push(newLink.trackingID)
-            }
-        })
-        this.save()
+        await this.db.run(
+            fs.readFileSync('./sql/insert-link.sql', 'utf-8'),
+            [newTrackingID, newRedirectID, targetURL, username, note]
+        )
         return newLink
     }
     getUserByLinkRedirect(linkID) {
