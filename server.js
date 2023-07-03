@@ -37,8 +37,8 @@ app.get('/createlink', (req, res) => {
     res.sendFile('public/createlink.html', {root: __dirname})
 })
 
-app.get('/viewlink/:id', (req, res) => {
-    let link = dataEditor.getLinkByTrackingID(req.params.id)
+app.get('/viewlink/:id', async (req, res) => {
+    let link = await dataEditor.getLinkByTrackingID(req.params.id)
     res.render('viewlink', {link: JSON.stringify(link), redirectID: link.redirectID})
 })
 
@@ -131,8 +131,8 @@ app.post('/link/create', async (req, res) => {
 })
 
 app.get('/:id', async (req, res) => {
-    let link = dataEditor.getLinkByRedirectID(req.params.id)
-    let user = dataEditor.getUserByLinkRedirect(req.params.id)
+    let link = await dataEditor.getLinkByRedirectID(req.params.id)
+    let user = await dataEditor.getUser(link.ownerID)
     let userAgent = req.get('User-Agent')
     let device = detector.detect(userAgent)
     let click = {
@@ -145,7 +145,7 @@ app.get('/:id', async (req, res) => {
     }
     // TODO: FIX
     // sendMail(user, click)
-    dataEditor.addClick(req.params.id, click)
+    await dataEditor.addClick(link.trackingID, click)
     // TODO: Make this work on replit
     // let urlData = await scrape(link.targetURL)
     res.render('redirect', {targetURL: link.targetURL, title: ''})

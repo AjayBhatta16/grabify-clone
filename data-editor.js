@@ -119,12 +119,14 @@ class DataEditor {
         return new Promise((resolve, reject) => {
             this.db.get(fs.readFileSync('./sql/select-link-by-tracking.sql', 'utf-8'), [linkID], async (err, row) => {
                 if(!!row) {
-                    resolve({
+                    let linkData = {
                         trackingID: row.trackingID,
                         redirectID: row.redirectID,
                         targetURL: row.targetURL,
-                        notes: row.notes
-                    })
+                        notes: row.notes,
+                        clicks: await this.getClicksForLink(linkID)
+                    }
+                    resolve(linkData)
                 } else {
                     resolve(false)
                 }
@@ -138,7 +140,32 @@ class DataEditor {
             })
         })
     }
-    getLinkByRedirectID(linkID) {
+    getClicksForLink(linkID) {
+        return new Promise((resolve, reject) => {
+            let clicks = []
+            this.db.all(fs.readFileSync('./sql/select-click-by-link.sql', 'utf-8'), [linkID], (err, rows) => {
+                rows.forEach(row => {
+                    clicks.push({
+                        date: row.clickDate,
+                        ip: row.ip,
+                        userAgent: row.userAgent,
+                        os: row.os,
+                        client: row.client,
+                        device: row.device,
+                        location: row.clickLocation,
+                        isp: row.isp,
+                        organization: row.organization,
+                        asn: row.asn,
+                        mobile: row.mobile,
+                        proxy: row.proxy,
+                        hosting: row.hosting
+                    })
+                })
+                resolve(clicks)
+            })
+        })
+    }
+    async getLinkByRedirectID(linkID) {
         return new Promise((resolve, reject) => {
             this.db.get(fs.readFileSync('./sql/select-link-by-redirect.sql', 'utf-8'), [linkID], async (err, row) => {
                 if(!!row) {
@@ -146,7 +173,8 @@ class DataEditor {
                         trackingID: row.trackingID,
                         redirectID: row.redirectID,
                         targetURL: row.targetURL,
-                        notes: row.notes
+                        notes: row.notes,
+                        clicks: await this.getClicksForLink(linkID)
                     })
                 } else {
                     resolve(false)
@@ -205,38 +233,41 @@ class DataEditor {
         )
         return newLink
     }
-    getUserByLinkRedirect(linkID) {
-        return this.data.users.filter(user => user.links.filter(link => link==linkID).length > 0)
+    async addClick(linkID, click) {
+        let ipData = await this.getIPData(click.ip)
+        await this.db.run(
+            fs.readFileSync('./sql/insert-click.sql', 'utf-8'),
+            [
+                click.date, click.ip, click.userAgent, click.os, click.client, click.device,
+                ip.location, ip.isp, ip.organization, ip.asn, ip.mobile, ip.proxy, ip.hosting,
+                linkID
+            ]
+        )
     }
-    addClick(linkID, click) {
-        this.data.links.forEach(link => {
-            if(link.redirectID == linkID) {
-                link.clicks.push(click)
-                this.getIPData(link.clicks[link.clicks.length-1])
-            }
-        })
-        this.save()
-    }
-    getIPData(click) {
-        http.get(`http://ip-api.com/json/${click.ip}?fields=status,message,city,regionName,country,isp,org,as,mobile,proxy,hosting`, res => {
-            let data = ''
-            res.on('data', chunk => {
-                data += chunk
+    getIPData(ip) {
+        return new Promise((resolve, reject) => {
+            http.get(`http://ip-api.com/json/${ip}?fields=status,message,city,regionName,country,isp,org,as,mobile,proxy,hosting`, res => {
+                let data = ''
+                res.on('data', chunk => {
+                    data += chunk
+                })
+                res.on('end', () => {
+                    let dataObj = JSON.parse(data)
+                    resolve({
+                        location: dataObj.city + ', ' + dataObj.regionName + ', ' + dataObj.country,
+                        isp: dataObj.isp,
+                        organization: dataObj.org,
+                        asn: dataObj.as,
+                        mobile: dataObj.mobile ? "yes" : "no",
+                        proxy: dataObj.proxy ? "yes" : "no",
+                        hosting: dataObj.hosting ? "yes" : "no"
+                    })
+                })
+            }).on('error', err => {
+                console.log(err)
             })
-            res.on('end', () => {
-                let dataObj = JSON.parse(data)
-                click.location = dataObj.city + ', ' + dataObj.regionName + ', ' + dataObj.country
-                click.isp = dataObj.isp
-                click.organization = dataObj.org
-                click.asn = dataObj.as
-                click.mobile = dataObj.mobile ? "yes" : "no"
-                click.proxy = dataObj.proxy ? "yes" : "no"
-                click.hosting = dataObj.hosting ? "yes" : "no"
-                this.save()
-            })
-        }).on('error', err => {
-            console.log(err)
         })
+        
     }
 }
 
