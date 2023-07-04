@@ -131,9 +131,13 @@ app.post('/link/create', async (req, res) => {
 })
 
 app.get('/:id', async (req, res) => {
+    console.log("getting link record by redirect ID...")
     let link = await dataEditor.getLinkByRedirectID(req.params.id)
+    console.log(link)
+    console.log(`getting user record for link owner: ${link.ownerID}...`)
     let user = await dataEditor.getUser(link.ownerID)
     let userAgent = req.get('User-Agent')
+    console.log("processing user agent...")
     let device = detector.detect(userAgent)
     let click = {
         date: Date.now(),
@@ -145,7 +149,9 @@ app.get('/:id', async (req, res) => {
     }
     // TODO: FIX
     // sendMail(user, click)
+    console.log("adding new click record...")
     await dataEditor.addClick(link.trackingID, click)
+    console.log("rendering redirect page...")
     // TODO: Make this work on replit
     // let urlData = await scrape(link.targetURL)
     res.render('redirect', {targetURL: link.targetURL, title: ''})

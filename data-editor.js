@@ -174,6 +174,7 @@ class DataEditor {
                         redirectID: row.redirectID,
                         targetURL: row.targetURL,
                         notes: row.notes,
+                        ownerID: row.ownerID,
                         clicks: await this.getClicksForLink(linkID)
                     })
                 } else {
@@ -215,7 +216,7 @@ class DataEditor {
         return newID
     }
     async createLink(username, targetURL, note) {
-        if(targetURL.indexOf('http://') != 0 && targetURL.indexOf('https://') == 0) {
+        if(targetURL.indexOf('http://') != 0 && targetURL.indexOf('https://') != 0) {
             targetURL = 'http://' + targetURL
         }
         let newTrackingID = await this.newTrackingID()
@@ -239,7 +240,7 @@ class DataEditor {
             fs.readFileSync('./sql/insert-click.sql', 'utf-8'),
             [
                 click.date, click.ip, click.userAgent, click.os, click.client, click.device,
-                ip.location, ip.isp, ip.organization, ip.asn, ip.mobile, ip.proxy, ip.hosting,
+                ipData.location, ipData.isp, ipData.organization, ipData.asn, ipData.mobile, ipData.proxy, ipData.hosting,
                 linkID
             ]
         )
