@@ -1,0 +1,38 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "type": "object",
+    "properties": {
+      "username": {
+        "type": "string",
+        "description": "A unique identifier for a user in the system"
+      },
+      "email": {
+        "type": "string",
+        "description": "An email address where the user can be contacted"
+      },
+      "password": {
+        "type": "string",
+        "description": "a hash generated from the password entered by the user"
+      },
+      "premiumUser": {
+        "type": "boolean",
+        "description": "An indicator for whether or not the user has access to premium features"
+      },
+      "links": {
+        "type": "array",
+        "description": "An array of unique identifiers for Link entities",
+        "items": [
+          {
+            "type": "string"
+          }
+        ]
+      }
+    },
+    "required": [
+      "username",
+      "email",
+      "password",
+      "premiumUser",
+      "links"
+    ]
+}

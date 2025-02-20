@@ -1,0 +1,67 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "type": "object",
+    "properties": {
+      "trackingID": {
+        "type": "string",
+        "description": "the identifier used within the administrative UI for pulling data"
+      },
+      "displayID": {
+        "type": "string",
+        "description": "the identifier used for accessing the redirect page"
+      },
+      "redirectURL": {
+        "type": "string",
+        "description": "the URL where accessors will be redirected to"
+      },
+      "siteTitle": {
+        "type": "string",
+        "description": "the value of the HTML title tags for the redirect URL page"
+      },
+      "siteDescription": {
+        "type": "string",
+        "description": "the value of the meta description tags from the redirect URL page"
+      },
+      "siteBannerURL": {
+        "type": "string",
+        "description": "the URL of the preview banner for the redirect URL page"
+      },
+      "useLogin": {
+        "type": "boolean",
+        "description": "indicator for if a login template will be used"
+      },
+      "loginPageBrand": {
+        "type": "string",
+        "description": "the type of login page that will be used"
+      },
+      "createdBy": {
+        "type": "string",
+        "description": "the username of the user who created the link"
+      },
+      "clicks": {
+        "type": "array",
+        "items": [
+          {
+            "type": "object"
+          }
+        ]
+      },
+      "loginAttempts": {
+        "type": "array",
+        "items": [
+          {
+            "type": "object"
+          }
+        ]
+      }
+    },
+    "required": [
+      "trackingID",
+      "displayID",
+      "siteBannerURL",
+      "useLogin",
+      "createdBy",
+      "clicks",
+      "loginAttempts"
+    ]
+  }

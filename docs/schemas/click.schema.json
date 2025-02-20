@@ -1,0 +1,64 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "type": "object",
+    "properties": {
+      "clickID": {
+        "type": "string",
+        "description": "A unique identifier for the click, includes the link ID"
+      },
+      "ipAddress": {
+        "type": "string",
+        "description": "the IP address of the user that accessed the link"
+      },
+      "timestamp": {
+        "type": "integer",
+        "description": "the date and time when the link was accessed"
+      },
+      "userAgent": {
+        "type": "string",
+        "description": "the user agent of the client that accessed the link"
+      },
+      "os": {
+        "type": "string",
+        "description": "the operating system derived from the user agent"
+      },
+      "client": {
+        "type": "string",
+        "description": "the client info (browser, etc) derived from the user agent"
+      },
+      "device": {
+        "type": "string",
+        "description": "the device type derived from the user agent"
+      },
+      "location": {
+        "type": "string",
+        "description": "https://ip-api.com/docs/api:json"
+      },
+      "isp": {
+        "type": "string",
+        "description": "https://ip-api.com/docs/api:json"
+      },
+      "mobile": {
+        "type": "boolean",
+        "description": "https://ip-api.com/docs/api:json"
+      },
+      "proxy": {
+        "type": "boolean",
+        "description": "https://ip-api.com/docs/api:json"
+      },
+      "hosting": {
+        "type": "boolean",
+        "description": "https://ip-api.com/docs/api:json"
+      },
+      "asn": {
+        "type": "string",
+        "description": "https://ip-api.com/docs/api:json"
+      }
+    },
+    "required": [
+      "clickID",
+      "ipAddress",
+      "timestamp",
+      "userAgent"
+    ]
+  }

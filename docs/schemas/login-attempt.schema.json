@@ -1,0 +1,33 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "type": "object",
+    "properties": {
+      "logID": {
+        "type": "string",
+        "description": "unique identifier for the login attempt, includes the link ID"
+      },
+      "ipAddress": {
+        "type": "string",
+        "description": "the IP address that the login attempt originated from"
+      },
+      "timestamp": {
+        "type": "integer",
+        "description": "the date and time when the login attempt was entered"
+      },
+      "username": {
+        "type": "string",
+        "description": "the username entered"
+      },
+      "password": {
+        "type": "string",
+        "description": "the plain-text password entered"
+      }
+    },
+    "required": [
+      "logID",
+      "ipAddress",
+      "timestamp",
+      "username",
+      "password"
+    ]
+  }
