@@ -2,8 +2,6 @@ const express = require('express')
 const cors = require('cors')
 const requestIp = require('request-ip')
 const DataEditor = require('./data-editor')
-const scrape = require('./scraper')
-const sendMail = require('./mailer')
 const DeviceDetector = require('node-device-detector')
 
 const app = express()
