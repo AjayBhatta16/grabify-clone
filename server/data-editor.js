@@ -1,113 +1,155 @@
 const fs = require('fs')
 const uuid = require('uuid')
 const http = require('http')
-const sqlite3 = require('sqlite3').verbose()
+const bcrypt = require("bcrypt");
+
+const firebaseAdmin = require("firebase-admin")
+const { initializeApp } = require("firebase-admin/app")
+
+const resolvedDbKeyFilePath = path.resolve(__dirname, "secrets/serviceAccountKey.json")
+
+const firestoreServiceAccountKey = require(resolvedDbKeyFilePath);
+
+const collections = {
+    USERS: 'users',
+    LINKS: 'links',
+    CLICKS: 'clicks'
+}
 
 const CODECHARS = ('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789').split('')
 
 class DataEditor {
     constructor() {
-        this.authTokens = []
-        if(fs.existsSync('./appdata.db')) {
-            this.db = new sqlite3.Database('./appdata.db', err => {
-                if(err) {
-                    console.log(`ERROR Opening Existing Database: ${err}`)
-                }
-                console.log('SUCCESS: Connected to database appdata.db')
-            })
-        } else {
-            this.db = new sqlite3.Database('./appdata.db', err => {
-                if(err) {
-                    console.log(`ERROR Creating Database: ${err}`)
-                }
-                console.log('SUCCESS: Created and connected to database')
-            })
-            this.db.run(fs.readFileSync('./sql/create-user-table.sql', 'utf-8'))
-            this.db.run(fs.readFileSync('./sql/create-link-table.sql', 'utf-8'))
-            this.db.run(fs.readFileSync('./sql/create-click-table.sql', 'utf-8'))
-        }
+        initializeApp({
+            credential: firebaseAdmin.credential.cert(firestoreServiceAccountKey),
+        })
+        this.db = firebaseAdmin.firestore()
     }
-    closeDB() {
-        this.db.close(err => {
-            if(err) {
-                console.log(`ERROR Closing Database: ${err}`)
+
+    // CRUD interfaces
+    async create(collectionName, data) {
+        try {
+            const item = await this.db.collection(collectionName).add(data)
+
+            return {
+                success: true,
+                item,
             }
-            console.log('Database connection closed')
-        })
+        } catch(error) {
+            console.log(`Error creating data in ${collectionName}: ${error}`)
+            return {
+                success: false,
+                error,
+            }
+        }
     }
-    save() {
-        fs.writeFile(this.dataFile, JSON.stringify(this.data), err => {
-            if(err) console.log(err)
-        })
+
+    async read(collectionName, filter = (data => data)) {
+        try {
+            const snapshot = await this.db.collection(collectionName).get()
+            const allData = snapshot.docs.map(doc => doc.data())
+            const filteredData = filter(allData)
+
+            return {
+                success: true,
+                result: filteredData,
+            }
+        } catch(error) {
+            console.log(`Error reading data from ${collectionName}: ${error}`)
+            return {
+                success: false,
+                error,
+            }
+        }
     }
-    createUser(username, email, password) {
-        this.db.run(
-            fs.readFileSync('./sql/insert-user.sql', 'utf-8'),
-            [username, password, email]
+
+    async update(collectionName, filterKey, filterValue, newData) {
+        try {
+            const snapshot = await this.db
+                .collection(collectionName)
+                .where(filterKey, '==', filterValue)
+                .get()
+
+            if (snapshot.empty) {
+                throw new Error(`No data found for ${filterKey} ${filterValue}`)
+            }
+
+            snapshot.forEach(async (doc) => await doc.ref.update(newData))
+
+            return {
+                success: true,
+            }
+        } catch(error) {
+            console.log(`Error updating data in collection ${collectionName}: ${error}`)
+            return {
+                success: false,
+                error
+            }
+        }
+    }
+
+    generateApiResponse(dbResult) {
+        if (dbResult.success) {
+            return {
+                status: 200,
+                item: dbResult.item ?? {},
+                data: dbResult.filteredData ?? [],
+            }
+        } else {
+            return {
+                status: 500,
+                message: 'A database error has occurred.'
+            }
+        }
+    }
+
+    // Login & Signup
+    async hashPassword(password) {
+        const saltRounds = 10;
+        const hashedPassword = await bcrypt.hash(password, saltRounds);
+        return hashedPassword;
+    }
+
+    async createNewUser(user) {
+        const duplicateUser = await this.read(
+            collections.USERS,
+            (data => data.username === user.username || data.email === user.email)
         )
-        //this.save()
-    }
-    validateNewUsername(username) {
-        return new Promise((resolve, reject) => {
-            this.db.get(fs.readFileSync('./sql/select-user-duplicate-name.sql', 'utf-8'), [username], (err, row) => {
-                resolve(!!row)
-            })
-        })
-    }
-    validateNewUserEmail(email) {
-        return new Promise((resolve, reject) => {
-            this.db.get(fs.readFileSync('./sql/select-user-duplicate-email.sql', 'utf-8'), [email], (err, row) => {
-                resolve(!!row)
-            })
-        })
-    }
-    validateNewUUID(id) {
-        return !this.authTokens.some(token => token.id == id)
-    }
-    generateNewUUID() {
-        let id = uuid.v4()
-        if(!this.validateNewUUID(id)) {
-            return this.generateNewUUID()
+
+        if (!!duplicateUser) {
+            return {
+                status: 409,
+                message: data.username === user.username
+                    ? 'A user with this username already exists'
+                    : 'A user with this email already exists',
+            }
         }
-        return id 
+
+        user.password = await this.hashPassword(user.password)
+        user.links = []
+        user.premiumUser = false
+
+        const dbResult = await this.create(collections.USERS, user)
+
+        return this.generateApiResponse(dbResult)
     }
-    generateAuthToken(username) {
-        let id = this.generateNewUUID()
-        let token = {
-            username: username,
-            id: id
+
+    async getUser(username, password, jwtBypass = false) {
+        if (!jwtBypass) {
+            password = await this.hashPassword(password)
         }
-        this.authTokens.push(token)
-        return token 
+
+        const dbResult = await this.read(
+            collections.USERS,
+            (data => 
+                (data.username === username || data.email === username)
+                && (jwtBypass || data.password === password)
+            )
+        )
+
+        return this.generateApiResponse(dbResult)
     }
-    checkCredentials(userID, passwd) {
-        return new Promise((resolve, reject) => {
-            this.db.get(fs.readFileSync('./sql/select-user-for-auth.sql', 'utf-8'), [userID, passwd], (err, row) => {
-                resolve(!!row ? this.generateAuthToken(row.username) : false)
-            })
-        })
-    }
-    async checkAuthToken(tokenStr) {
-        let token = JSON.parse(tokenStr)
-        if(this.authTokens.filter(t => t.username==token.username && t.id==token.id).length > 0) {
-            return await this.getUser(token.username)
-        } 
-        return false 
-    } 
-    async getUser(userID) {
-        return new Promise(async (resolve, reject) => {
-            let user = {}
-            this.db.get(fs.readFileSync('./sql/select-user-full.sql', 'utf-8'), [userID, userID], async (err, row) => {
-                if(row) {
-                    user.username = row.username
-                    user.email = row.email
-                    user.passwd = row.passwd
-                    user.links = await this.getLinksByUser(user.username)
-                    resolve(user)
-                }
-            })
-        })
-    }
+    
     async getLinksByUser(username) {
         return new Promise((resolve, reject) => {
             this.db.all(fs.readFileSync('./sql/select-links-for-user.sql', 'utf-8'), [username], (err, rows) => {
