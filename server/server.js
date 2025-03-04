@@ -1,6 +1,10 @@
 const express = require('express')
 const cors = require('cors')
 const requestIp = require('request-ip')
+const jwt = require("jsonwebtoken");
+const bodyParser = require("body-parser");
+const fs = require('fs')
+
 const DataEditor = require('./data-editor')
 const DeviceDetector = require('node-device-detector')
 
@@ -11,131 +15,117 @@ app.use(express.urlencoded({extended: true}))
 app.use(express.static(__dirname + '/public'))
 app.set('view engine','ejs')
 
-let detector = new DeviceDetector()
+const SECRET_KEY = process.env.SECRET_KEY ?? fs.readFileSync(__dirname + '/secrets/jwt-guid.txt')
 
+let detector = new DeviceDetector()
 let dataEditor = new DataEditor()
 
-app.get('/', (req, res) => {
+const authenticate = (req, res, next) => {
+    const token = req.headers["authorization"]?.split(" ")[1];
+    if (!token) return res.status(401).json({ message: "Access denied" });
+
+    jwt.verify(token, SECRET_KEY, (err, decoded) => {
+        if (err) return res.status(403).json({ message: "Invalid token" });
+        req.user = decoded;
+        next();
+    });
+};
+
+app.get('/', (_, res) => {
     res.sendFile('public/index.html', {root: __dirname})
 })
 
-app.get('/login', (req, res) => {
+app.get('/login', (_, res) => {
     res.sendFile('public/login.html', {root: __dirname})
 })
 
-app.get('/signup', (req, res) => {
+app.get('/signup', (_, res) => {
     res.sendFile('public/signup.html', {root: __dirname})
 })
 
-app.get('/dashboard', (req, res) => {
+app.get('/dashboard', (_, res) => {
     res.sendFile('public/dashboard.html', {root: __dirname})
 })
 
-app.get('/createlink', (req, res) => {
+app.get('/createlink', (_, res) => {
     res.sendFile('public/createlink.html', {root: __dirname})
 })
 
 app.get('/viewlink/:id', async (req, res) => {
-    let link = await dataEditor.getLinkByTrackingID(req.params.id)
-    res.render('viewlink', {link: JSON.stringify(link), redirectID: link.redirectID})
+    let response = await dataEditor.getLinkByTrackingID(req.params.id)
+
+    if (!response.item) {
+        res.status(response.status).message(response.message)
+    }
+
+    res.render('viewlink', {
+        link: JSON.stringify(response.item), 
+        redirectID: response.item.displayID
+    })
 })
 
 app.post('/user/create', async (req, res) => {
-    let unameFound = await dataEditor.validateNewUsername(req.body.username)
-    let emailFound = await dataEditor.validateNewUserEmail(req.body.email)
-    if(unameFound) {
-        console.log("duplicate username")
-        res.json({
-            status: '400',
-            message: 'Username already taken'
-        })
-    } else if(emailFound) {
-        res.json({
-            status: '400',
-            message: 'Email already taken'
-        })
-    } else {
-        await dataEditor.createUser(
-            req.body.username,
-            req.body.email,
-            req.body.password
-        )
-        res.json({
-            status: '200',
-            message: 'account created successfully',
-            token: dataEditor.generateAuthToken(req.body.username)
-        })
+    const response = await dataEditor.createNewUser(req.body)
+
+    if (!response.item) {
+        res.status(response.status).message(response.message)
     }
+
+    const token = jwt.sign({ username: response.item.username },  SECRET_KEY, { expiresIn: "1h" })
+
+    res.status(response.status).json({
+        data: response.item,
+        token,
+    })
 })
 
 app.post('/user/verify', async (req, res) => {
-    let token = await dataEditor.checkCredentials(req.body.userID, req.body.password)
-    if(!token) {
-        res.json({
-            status: '400',
-            message: 'Incorrect user ID or password'
-        })
-    } else {
-        res.json({
-            status: '200',
-            message: 'user logged in successfully',
-            token: token 
-        })
+    const response = await dataEditor.getUser(req.body.username, req.body.password)
+    
+    if (!response.item) {
+        res.status(response.status).message(response.message)
     }
+
+    const token = jwt.sign({ username: response.item.username },  SECRET_KEY, { expiresIn: "1h" })
+
+    res.status(response.status).json({
+        data: response.item,
+        token,
+    })
 })
 
-app.post('/token/verify', async (req, res) => {
-    let user = await dataEditor.checkAuthToken(req.body.token)
-    if(!user) {
-        res.json({
-            status: '400',
-            message: 'An invalid token has been provided'
-        })
-    } else {
-        user.links = await Promise.all(user.links.map(async (linkID) => {
-            let link = await dataEditor.getLinkByTrackingID(linkID)
-            let clickCount = await dataEditor.getClickCount(linkID)
-            return {
-                id: linkID,
-                redirectID: link.redirectID,
-                targetURL: link.targetURL,
-                note: link.note,
-                numClicks: clickCount
-            }
-        }))
-        res.json({
-            status: '200',
-            message: 'token validated successfully',
-            user: user 
-        })
-    }
-})
+app.post('/link/create', authenticate, async (req, res) => {
+    const response = await dataEditor.createLink(
+        req.user.username, req.body.redirectURL, req.body.note
+    )
 
-app.post('/link/create', async (req, res) => {
-    let user = dataEditor.checkAuthToken(req.body.token)
-    if(!user) {
-        res.json({
-            status: '400',
-            message: 'An invalid token has been provided'
-        })
-    } else {
-        let link = await dataEditor.createLink(JSON.parse(req.body.token).username, req.body.targetURL, req.body.note)
-        res.json({
-            status: '200',
-            message: 'Link created successfully',
-            link: link 
-        })
+    if (!response.item) {
+        res.status(response.status).message(response.message)
     }
+
+    res.status(response.status).json({
+        data: response.item,
+    })
 })
 
 app.get('/:id', async (req, res) => {
     console.log("getting link record by redirect ID...")
-    let link = await dataEditor.getLinkByRedirectID(req.params.id)
+
+    let link = await dataEditor.getLinkByDisplayID(req.params.id)
     console.log(link)
+
     console.log(`getting user record for link owner: ${link.ownerID}...`)
-    let user = await dataEditor.getUser(link.ownerID)
+
     let userAgent = req.get('User-Agent')
-    console.log("processing user agent...")
+
+    let click = {
+        linkID: req.params.id,
+        timestamp: Date.now(),
+        ip: requestIp.getClientIp(req),
+        userAgent
+    }
+
+    /* TODO: implement as microservice
     let device = detector.detect(userAgent)
     let click = {
         date: Date.now(),
@@ -144,17 +134,20 @@ app.get('/:id', async (req, res) => {
         os: `${device.os.name} ${device.os.version}`,
         client: `${device.client.type} - ${device.client.name} ${device.client.version}`,
         device: `${device.device.type} - ${device.device.type} ${device.device.model}`
-    }
-    // TODO: FIX
+    }*/
+
+    // TODO: implement as microservice
     // sendMail(user, click)
+
     console.log("adding new click record...")
-    await dataEditor.addClick(link.trackingID, click)
+
+    await dataEditor.addClick(click)
+
     console.log("rendering redirect page...")
-    // TODO: Make this work on replit
+
+    // TODO: implement as microservice
     // let urlData = await scrape(link.targetURL)
     res.render('redirect', {targetURL: link.targetURL, title: ''})
 })
-
-app.on('close', () => dataEditor.closeDB())
 
 app.listen(process.env.PORT || 5001)
