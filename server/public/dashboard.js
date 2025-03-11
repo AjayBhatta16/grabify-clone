@@ -1,15 +1,16 @@
-fetch(`${env.proto}://${env.domain}/token/verify`, {
+fetch(`${env.proto}://${env.domain}/user/info`, {
     method: "POST",
-    headers: {'Content-Type': 'application/json'}, 
-    body: JSON.stringify({token: localStorage.getItem('token')})
+    headers: {
+        'Content-Type': 'application/json',
+        'authorization': localStorage.getItem('token'),
+    }
 }).then(res => {
     return res.json()
 }).then(res => {
-    if(res.status == '400') {
-        alert(res.message)
-        window.location = '/'
-    }
-    populateLinks(res.user.links)
+    populateLinks(res.data?.links ?? [])
+}).catch(err => {
+    alert(err.message ?? 'An unknown error has occurred.')
+    window.location = '/'
 })
 
 function populateLinks(links) {

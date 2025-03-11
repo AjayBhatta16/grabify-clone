@@ -14,6 +14,7 @@ app.use(express.json())
 app.use(express.urlencoded({extended: true}))
 app.use(express.static(__dirname + '/public'))
 app.set('view engine','ejs')
+app.use(bodyParser.json())
 
 const SECRET_KEY = process.env.SECRET_KEY ?? fs.readFileSync(__dirname + '/secrets/jwt-guid.txt')
 
@@ -81,12 +82,23 @@ app.post('/user/create', async (req, res) => {
 
 app.post('/user/verify', async (req, res) => {
     const response = await dataEditor.getUser(req.body.username, req.body.password)
+
+    console.log('Login - getUser result:', response)
     
     if (!response.item) {
         res.status(response.status).message(response.message)
     }
 
     const token = jwt.sign({ username: response.item.username },  SECRET_KEY, { expiresIn: "1h" })
+
+    res.status(response.status).json({
+        data: response.item,
+        token,
+    })
+})
+
+app.post('/user/info', authenticate, async (req, res) => {
+    const response = await dataEditor.getUser(req.user.username, null, true);
 
     res.status(response.status).json({
         data: response.item,

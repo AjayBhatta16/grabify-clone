@@ -21,9 +21,11 @@ button.addEventListener('click', (e) => {
     }
     fetch(`${env.proto}://${env.domain}/link/create`, {
         method: 'POST',
-        headers: {'Content-Type': 'application/json'},
+        headers: {
+            'Content-Type': 'application/json',
+            'authorization': localStorage.getItem('token'),
+        },
         body: JSON.stringify({
-            token: localStorage.getItem('token'),
             targetURL: targetURL.value,
             note: (note.value && note.value.length > 0) ? note.value : null 
         })

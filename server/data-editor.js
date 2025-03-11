@@ -2,6 +2,7 @@ const fs = require('fs')
 const uuid = require('uuid')
 const http = require('http')
 const bcrypt = require("bcrypt");
+const path = require('path')
 
 const firebaseAdmin = require("firebase-admin")
 const { initializeApp } = require("firebase-admin/app")
@@ -29,8 +30,8 @@ class DataEditor {
         this.db = firebaseAdmin.firestore()
 
         this.readAll(collections.LINKS)
-            .then(links => {
-                links.forEach(link => {
+            .then(({ data }) => {
+                data.forEach(link => {
                     this.trackingIDs.push(link.trackingID)
                     this.displayIDs.push(link.displayID)
                 })
@@ -121,7 +122,7 @@ class DataEditor {
     generateApiResponse(dbResult) {
         if (dbResult.success) {
             return {
-                status: 200,
+                status: !!dbResult.item || !!dbResult.data ? 200 : 400,
                 item: dbResult.item ?? {},
                 data: dbResult.data ?? [],
             }
@@ -141,15 +142,15 @@ class DataEditor {
     }
 
     async createNewUser(user) {
-        const duplicateUser = await this.readAll(
+        const duplicateUser = await this.readOne(
             collections.USERS,
             (data => data.username === user.username || data.email === user.email)
         )
 
-        if (!!duplicateUser) {
+        if (!!duplicateUser.item) {
             return {
                 status: 409,
-                message: data.username === user.username
+                message: duplicateUser.item.username === user.username
                     ? 'A user with this username already exists'
                     : 'A user with this email already exists',
             }

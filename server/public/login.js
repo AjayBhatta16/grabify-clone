@@ -28,11 +28,7 @@ button.addEventListener('click', (e) => {
     }).then(res => {
         return res.json()
     }).then(res => {
-        if(res.status == '400') {
-            setErrMsg(res.message)
-            return 
-        }
-        localStorage.setItem('token', JSON.stringify(res.token))
+        localStorage.setItem('token', res.token)
         window.location = '/dashboard'
-    })
+    }).catch(err => setErrMsg(err.message ?? 'An unknown error has occurred.'))
 })
