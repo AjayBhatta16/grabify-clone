@@ -1,250 +1,312 @@
 const fs = require('fs')
 const uuid = require('uuid')
 const http = require('http')
-const sqlite3 = require('sqlite3').verbose()
+const bcrypt = require("bcrypt");
+const path = require('path')
+
+const firebaseAdmin = require("firebase-admin")
+const { initializeApp } = require("firebase-admin/app")
+
+const resolvedDbKeyFilePath = path.resolve(__dirname, "secrets/serviceAccountKey.json")
+
+const firestoreServiceAccountKey = require(resolvedDbKeyFilePath);
+
+const collections = {
+    USERS: 'users',
+    LINKS: 'links',
+    CLICKS: 'clicks'
+}
 
 const CODECHARS = ('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789').split('')
 
 class DataEditor {
+    trackingIDs = []
+    displayIDs = []
+
     constructor() {
-        this.authTokens = []
-        if(fs.existsSync('./appdata.db')) {
-            this.db = new sqlite3.Database('./appdata.db', err => {
-                if(err) {
-                    console.log(`ERROR Opening Existing Database: ${err}`)
-                }
-                console.log('SUCCESS: Connected to database appdata.db')
-            })
-        } else {
-            this.db = new sqlite3.Database('./appdata.db', err => {
-                if(err) {
-                    console.log(`ERROR Creating Database: ${err}`)
-                }
-                console.log('SUCCESS: Created and connected to database')
-            })
-            this.db.run(fs.readFileSync('./sql/create-user-table.sql', 'utf-8'))
-            this.db.run(fs.readFileSync('./sql/create-link-table.sql', 'utf-8'))
-            this.db.run(fs.readFileSync('./sql/create-click-table.sql', 'utf-8'))
-        }
-    }
-    closeDB() {
-        this.db.close(err => {
-            if(err) {
-                console.log(`ERROR Closing Database: ${err}`)
-            }
-            console.log('Database connection closed')
+        initializeApp({
+            credential: firebaseAdmin.credential.cert(firestoreServiceAccountKey),
         })
-    }
-    save() {
-        fs.writeFile(this.dataFile, JSON.stringify(this.data), err => {
-            if(err) console.log(err)
-        })
-    }
-    createUser(username, email, password) {
-        this.db.run(
-            fs.readFileSync('./sql/insert-user.sql', 'utf-8'),
-            [username, password, email]
-        )
-        //this.save()
-    }
-    validateNewUsername(username) {
-        return new Promise((resolve, reject) => {
-            this.db.get(fs.readFileSync('./sql/select-user-duplicate-name.sql', 'utf-8'), [username], (err, row) => {
-                resolve(!!row)
-            })
-        })
-    }
-    validateNewUserEmail(email) {
-        return new Promise((resolve, reject) => {
-            this.db.get(fs.readFileSync('./sql/select-user-duplicate-email.sql', 'utf-8'), [email], (err, row) => {
-                resolve(!!row)
-            })
-        })
-    }
-    validateNewUUID(id) {
-        return !this.authTokens.some(token => token.id == id)
-    }
-    generateNewUUID() {
-        let id = uuid.v4()
-        if(!this.validateNewUUID(id)) {
-            return this.generateNewUUID()
-        }
-        return id 
-    }
-    generateAuthToken(username) {
-        let id = this.generateNewUUID()
-        let token = {
-            username: username,
-            id: id
-        }
-        this.authTokens.push(token)
-        return token 
-    }
-    checkCredentials(userID, passwd) {
-        return new Promise((resolve, reject) => {
-            this.db.get(fs.readFileSync('./sql/select-user-for-auth.sql', 'utf-8'), [userID, passwd], (err, row) => {
-                resolve(!!row ? this.generateAuthToken(row.username) : false)
-            })
-        })
-    }
-    async checkAuthToken(tokenStr) {
-        let token = JSON.parse(tokenStr)
-        if(this.authTokens.filter(t => t.username==token.username && t.id==token.id).length > 0) {
-            return await this.getUser(token.username)
-        } 
-        return false 
-    } 
-    async getUser(userID) {
-        return new Promise(async (resolve, reject) => {
-            let user = {}
-            this.db.get(fs.readFileSync('./sql/select-user-full.sql', 'utf-8'), [userID, userID], async (err, row) => {
-                if(row) {
-                    user.username = row.username
-                    user.email = row.email
-                    user.passwd = row.passwd
-                    user.links = await this.getLinksByUser(user.username)
-                    resolve(user)
-                }
-            })
-        })
-    }
-    async getLinksByUser(username) {
-        return new Promise((resolve, reject) => {
-            this.db.all(fs.readFileSync('./sql/select-links-for-user.sql', 'utf-8'), [username], (err, rows) => {
-                resolve(rows.map(row => row.trackingID))
-            })
-        })
-    }
-    async getLinkByTrackingID(linkID) {
-        return new Promise((resolve, reject) => {
-            this.db.get(fs.readFileSync('./sql/select-link-by-tracking.sql', 'utf-8'), [linkID], async (err, row) => {
-                if(!!row) {
-                    let linkData = {
-                        trackingID: row.trackingID,
-                        redirectID: row.redirectID,
-                        targetURL: row.targetURL,
-                        notes: row.notes,
-                        clicks: await this.getClicksForLink(linkID)
-                    }
-                    resolve(linkData)
-                } else {
-                    resolve(false)
-                }
-            })
-        })
-    }
-    async getClickCount(linkID) {
-        return new Promise((resolve, reject) => {
-            this.db.all(fs.readFileSync('./sql/select-click-by-link.sql', 'utf-8'), [linkID], (err, rows) => {
-                resolve(!!rows ? rows.length : 0)
-            })
-        })
-    }
-    getClicksForLink(linkID) {
-        return new Promise((resolve, reject) => {
-            let clicks = []
-            this.db.all(fs.readFileSync('./sql/select-click-by-link.sql', 'utf-8'), [linkID], (err, rows) => {
-                rows.forEach(row => {
-                    clicks.push({
-                        date: row.clickDate,
-                        ip: row.ip,
-                        userAgent: row.userAgent,
-                        os: row.os,
-                        client: row.client,
-                        device: row.device,
-                        location: row.clickLocation,
-                        isp: row.isp,
-                        organization: row.organization,
-                        asn: row.asn,
-                        mobile: row.mobile,
-                        proxy: row.proxy,
-                        hosting: row.hosting
-                    })
+        this.db = firebaseAdmin.firestore()
+
+        this.readAll(collections.LINKS)
+            .then(({ data }) => {
+                data.forEach(link => {
+                    this.trackingIDs.push(link.trackingID)
+                    this.displayIDs.push(link.displayID)
                 })
-                resolve(clicks)
             })
-        })
     }
-    async getLinkByRedirectID(linkID) {
-        return new Promise((resolve, reject) => {
-            this.db.get(fs.readFileSync('./sql/select-link-by-redirect.sql', 'utf-8'), [linkID], async (err, row) => {
-                if(!!row) {
-                    resolve({
-                        trackingID: row.trackingID,
-                        redirectID: row.redirectID,
-                        targetURL: row.targetURL,
-                        notes: row.notes,
-                        ownerID: row.ownerID,
-                        clicks: await this.getClicksForLink(linkID)
-                    })
-                } else {
-                    resolve(false)
-                }
-            })
-        })
+
+    // CRUD interfaces
+    async create(collectionName, data) {
+        try {
+            const item = await this.db.collection(collectionName).add(data)
+
+            return {
+                success: true,
+                item,
+            }
+        } catch(error) {
+            console.log(`Error creating data in ${collectionName}: ${error}`)
+            return {
+                success: false,
+                error,
+            }
+        }
     }
+
+    async readAll(collectionName, filter = (data => data)) {
+        try {
+            const snapshot = await this.db.collection(collectionName).get()
+            const allData = snapshot.docs.map(doc => doc.data())
+            const filteredData = allData.filter(filter)
+
+            return {
+                success: true,
+                data: filteredData,
+            }
+        } catch(error) {
+            console.log(`Error reading data from ${collectionName}: ${error}`)
+            return {
+                success: false,
+                error,
+            }
+        }
+    }
+
+    async readOne(collectionName, filter = (data => data)) {
+        try {
+            const snapshot = await this.db.collection(collectionName).get()
+            const allData = snapshot.docs.map(doc => doc.data())
+            const filteredData = allData.filter(filter)
+
+            return {
+                success: true,
+                item: filteredData[0],
+            }
+        } catch(error) {
+            console.log(`Error reading data from ${collectionName}: ${error}`)
+            return {
+                success: false,
+                error,
+            }
+        }
+    }
+
+    async update(collectionName, filterKey, filterValue, change = (data => data)) {
+        try {
+            const snapshot = await this.db
+                .collection(collectionName)
+                .where(filterKey, '==', filterValue)
+                .get()
+
+            if (snapshot.empty) {
+                throw new Error(`No data found for ${filterKey} ${filterValue}`)
+            }
+
+            snapshot.forEach(async (doc) => await doc.ref.update(change(doc.data())))
+
+            return {
+                success: true,
+            }
+        } catch(error) {
+            console.log(`Error updating data in collection ${collectionName}: ${error}`)
+            return {
+                success: false,
+                error
+            }
+        }
+    }
+
+    generateApiResponse(dbResult) {
+        if (dbResult.success) {
+            return {
+                status: !!dbResult.item || !!dbResult.data?.length ? 200 : 400,
+                item: dbResult.item ?? {},
+                data: dbResult.data ?? [],
+            }
+        } else {
+            return {
+                status: 500,
+                message: 'A database error has occurred.'
+            }
+        }
+    }
+
+    // Login & Signup
+    async hashPassword(password) {
+        const saltRounds = 10;
+        const hashedPassword = await bcrypt.hash(password, saltRounds);
+        return hashedPassword;
+    }
+
+    async createNewUser(user) {
+        const duplicateUser = await this.readOne(
+            collections.USERS,
+            (data => data.username === user.username || data.email === user.email)
+        )
+
+        if (!!duplicateUser.item) {
+            return {
+                status: 409,
+                message: duplicateUser.item.username === user.username
+                    ? 'A user with this username already exists'
+                    : 'A user with this email already exists',
+            }
+        }
+
+        user.password = await this.hashPassword(user.password)
+        user.links = []
+        user.premiumUser = false
+
+        const dbResult = await this.create(collections.USERS, user)
+
+        return this.generateApiResponse(dbResult)
+    }
+
+    async getUser(username, password, jwtBypass = false) {
+        console.log('username:', username)
+        const dbResult = await this.readOne(
+            collections.USERS,
+            (data => 
+                (data.username === username || data.email === username)
+            )
+        )
+
+        if (!!dbResult.item) {
+            const correctPassword = jwtBypass || await bcrypt.compare(password, dbResult.item.password)
+            if (!correctPassword) {
+                dbResult.item = null
+                return this.generateApiResponse(dbResult)
+            }
+
+            dbResult.item = await this.populateLinkInfo(dbResult.item)
+            dbResult.item.password = undefined
+        }
+
+        return this.generateApiResponse(dbResult)
+    }
+
+    // Links 
+    async populateLinkInfo(user) {
+        const dbResult = await this.readAll(
+            collections.LINKS,
+            (data => 
+                user.links.some(id => data.trackingID === id)
+            )
+        )
+
+        user.links = dbResult.data ?? []
+
+        return user
+    }
+    
+    async getLinkByTrackingID(trackingID) {
+        const dbResult = await this.readOne(
+            collections.LINKS,
+            (data =>
+                data.trackingID === trackingID
+            )
+        )
+
+        return this.generateApiResponse(dbResult)
+    }
+
+    async getLinkByDisplayID(displayID) {
+        const dbResult = await this.readOne(
+            collections.LINKS,
+            (data =>
+                data.displayID === displayID
+            )
+        )
+
+        return this.generateApiResponse(dbResult)
+    }
+
+    generateLinkID() {
+        let newID = ''
+        for(let i = 0; i < 6; i++) {
+            let n = CODECHARS[Math.floor(Math.random()*CODECHARS.length)]
+            newID += n 
+        }
+
+        return newID
+    }
+
     async newTrackingID() {
-        let newID = ''
-        for(let i = 0; i < 6; i++) {
-            let n = CODECHARS[Math.floor(Math.random()*CODECHARS.length)]
-            newID += n 
-        }
-        let duplicate = await this.getLinkByTrackingID(newID)
+        let newID = this.generateLinkID()
+        let duplicate = this.trackingIDs.some(id => id === newID)
+
         while(duplicate) {
-            for(let i = 0; i < 6; i++) {
-                let n = CODECHARS[Math.floor(Math.random()*CODECHARS.length)]
-                newID += n 
-            }
-            duplicate = await this.getLinkByTrackingID(newID)
+            newID = this.generateLinkID()
+            duplicate = this.trackingIDs.some(id => id === newID)
         }
+
         return newID
     }
-    async newRedirectID() {
-        let newID = ''
-        for(let i = 0; i < 6; i++) {
-            let n = CODECHARS[Math.floor(Math.random()*CODECHARS.length)]
-            newID += n 
-        }
-        let duplicate = await this.getLinkByRedirectID(newID)
+
+    async newDisplayID() {
+        let newID = this.generateLinkID()
+        let duplicate = this.displayIDs.some(id => id === newID)
+
         while(duplicate) {
-            for(let i = 0; i < 6; i++) {
-                let n = CODECHARS[Math.floor(Math.random()*CODECHARS.length)]
-                newID += n 
-            }
-            duplicate = await this.getLinkByRedirectID(newID)
+            newID = this.generateLinkID()
+            duplicate = this.displayIDs.some(id => id === newID)
         }
+
         return newID
     }
-    async createLink(username, targetURL, note) {
-        if(targetURL.indexOf('http://') != 0 && targetURL.indexOf('https://') != 0) {
-            targetURL = 'http://' + targetURL
+
+    async createLink(createdBy, redirectURL, note) {
+        if(redirectURL.indexOf('http://') != 0 && redirectURL.indexOf('https://') != 0) {
+            redirectURL = 'http://' + redirectURL
         }
-        let newTrackingID = await this.newTrackingID()
-        let newRedirectID = await this.newRedirectID()
+
+        let trackingID = await this.newTrackingID()
+        let displayID = await this.newDisplayID()
+
         let newLink = {
-            trackingID: newTrackingID,
-            redirectID: newRedirectID,
-            targetURL: targetURL,
-            note: note,
-            clicks: []
+            trackingID,
+            displayID,
+            redirectURL,
+            note,
+            clicks: [],
+            loginAttempts: [],
+            createdBy,
+            useLogin: false,
         }
-        await this.db.run(
-            fs.readFileSync('./sql/insert-link.sql', 'utf-8'),
-            [newTrackingID, newRedirectID, targetURL, username, note]
+
+        const dbResult = await this.create(collections.LINKS, newLink)
+
+        await this.update(
+            collections.USERS, 'username', createdBy,
+            data => ({
+                ...data,
+                links: data.links ? [...data.links, trackingID] : [trackingID],
+            })
         )
-        return newLink
+
+        return this.generateApiResponse(dbResult)
     }
-    async addClick(linkID, click) {
-        let ipData = await this.getIPData(click.ip)
-        await this.db.run(
-            fs.readFileSync('./sql/insert-click.sql', 'utf-8'),
-            [
-                click.date, click.ip, click.userAgent, click.os, click.client, click.device,
-                ipData.location, ipData.isp, ipData.organization, ipData.asn, ipData.mobile, ipData.proxy, ipData.hosting,
-                linkID
-            ]
+
+    async addClick(click) {
+        click.clickID = `${click.linkID}_${click.timestamp}`
+
+        const dbResult = await this.create(collections.CLICKS, click)
+
+        await this.update(
+            collections.LINKS, 'displayID', click.linkID,
+            data => ({
+                ...data,
+                clicks: data.clicks ? [...data.clicks, click] : [click]
+            }),
         )
+
+        return this.generateApiResponse(dbResult)
     }
+    
+    // TODO: implement as microservice
     getIPData(ip) {
         return new Promise((resolve, reject) => {
             http.get(`http://ip-api.com/json/${ip}?fields=status,message,city,regionName,country,isp,org,as,mobile,proxy,hosting`, res => {

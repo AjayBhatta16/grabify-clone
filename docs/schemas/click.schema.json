@@ -10,6 +10,10 @@
         "type": "string",
         "description": "the IP address of the user that accessed the link"
       },
+      "linkID": {
+        "type": "string",
+        "description": "the display ID of the link that was clicked"
+      },
       "timestamp": {
         "type": "integer",
         "description": "the date and time when the link was accessed"
@@ -57,6 +61,7 @@
     },
     "required": [
       "clickID",
+      "linkID",
       "ipAddress",
       "timestamp",
       "userAgent"

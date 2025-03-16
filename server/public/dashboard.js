@@ -1,15 +1,16 @@
-fetch(`${env.proto}://${env.domain}/token/verify`, {
+fetch(`${env.proto}://${env.domain}/user/info`, {
     method: "POST",
-    headers: {'Content-Type': 'application/json'}, 
-    body: JSON.stringify({token: localStorage.getItem('token')})
+    headers: {
+        'Content-Type': 'application/json',
+        'authorization': `Bearer ${localStorage.getItem('token')}`,
+    }
 }).then(res => {
     return res.json()
 }).then(res => {
-    if(res.status == '400') {
-        alert(res.message)
-        window.location = '/'
-    }
-    populateLinks(res.user.links)
+    populateLinks(res.data?.links ?? [])
+}).catch(err => {
+    alert(err.message ?? 'An unknown error has occurred.')
+    window.location = '/'
 })
 
 function populateLinks(links) {
@@ -25,10 +26,10 @@ function populateLinks(links) {
             tbody.innerHTML += `
                 <tr>
                     <td colspan="1">${i+1}</td>
-                    <td colspan="1"><a href="/viewlink/${link.id}">${link.id}</a></td>
-                    <td colspan="1">http://${env.domain}/${link.redirectID}</td>
+                    <td colspan="1"><a href="/viewlink/${link.trackingID}">${link.trackingID}</a></td>
+                    <td colspan="1">http://${env.domain}/${link.displayID}</td>
                     <td colspan="2">${(link.note && link.note.length > 0) ? link.note : 'none'}</td>
-                    <td colspan="1">${link.numClicks}</td>
+                    <td colspan="1">${link.clicks.length}</td>
                 </tr>
             `
         })

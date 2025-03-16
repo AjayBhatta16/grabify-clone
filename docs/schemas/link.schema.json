@@ -14,6 +14,10 @@
         "type": "string",
         "description": "the URL where accessors will be redirected to"
       },
+      "note": {
+        "type": "string",
+        "description": "the note attached to the link by the user"
+      },
       "siteTitle": {
         "type": "string",
         "description": "the value of the HTML title tags for the redirect URL page"
@@ -58,7 +62,6 @@
     "required": [
       "trackingID",
       "displayID",
-      "siteBannerURL",
       "useLogin",
       "createdBy",
       "clicks",
