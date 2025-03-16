@@ -2,7 +2,7 @@ fetch(`${env.proto}://${env.domain}/user/info`, {
     method: "POST",
     headers: {
         'Content-Type': 'application/json',
-        'authorization': localStorage.getItem('token'),
+        'authorization': `Bearer ${localStorage.getItem('token')}`,
     }
 }).then(res => {
     return res.json()
@@ -26,10 +26,10 @@ function populateLinks(links) {
             tbody.innerHTML += `
                 <tr>
                     <td colspan="1">${i+1}</td>
-                    <td colspan="1"><a href="/viewlink/${link.id}">${link.id}</a></td>
-                    <td colspan="1">http://${env.domain}/${link.redirectID}</td>
+                    <td colspan="1"><a href="/viewlink/${link.trackingID}">${link.trackingID}</a></td>
+                    <td colspan="1">http://${env.domain}/${link.displayID}</td>
                     <td colspan="2">${(link.note && link.note.length > 0) ? link.note : 'none'}</td>
-                    <td colspan="1">${link.numClicks}</td>
+                    <td colspan="1">${link.clicks.length}</td>
                 </tr>
             `
         })

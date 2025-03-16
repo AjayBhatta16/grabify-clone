@@ -23,10 +23,10 @@ button.addEventListener('click', (e) => {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'authorization': localStorage.getItem('token'),
+            'authorization': `Bearer ${localStorage.getItem('token')}`,
         },
         body: JSON.stringify({
-            targetURL: targetURL.value,
+            redirectURL: targetURL.value,
             note: (note.value && note.value.length > 0) ? note.value : null 
         })
     }).then(res => {

@@ -18,7 +18,7 @@ button.addEventListener('click', (e) => {
         return 
     }
     let reqData = {
-        userID: userID.value,
+        username: userID.value,
         password: password.value
     }
     fetch(`${env.proto}://${env.domain}/user/verify`, {

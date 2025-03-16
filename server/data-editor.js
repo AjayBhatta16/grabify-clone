@@ -60,7 +60,7 @@ class DataEditor {
         try {
             const snapshot = await this.db.collection(collectionName).get()
             const allData = snapshot.docs.map(doc => doc.data())
-            const filteredData = filter(allData)
+            const filteredData = allData.filter(filter)
 
             return {
                 success: true,
@@ -79,7 +79,7 @@ class DataEditor {
         try {
             const snapshot = await this.db.collection(collectionName).get()
             const allData = snapshot.docs.map(doc => doc.data())
-            const filteredData = filter(allData)
+            const filteredData = allData.filter(filter)
 
             return {
                 success: true,
@@ -94,7 +94,7 @@ class DataEditor {
         }
     }
 
-    async update(collectionName, filterKey, filterValue, newData) {
+    async update(collectionName, filterKey, filterValue, change = (data => data)) {
         try {
             const snapshot = await this.db
                 .collection(collectionName)
@@ -105,7 +105,7 @@ class DataEditor {
                 throw new Error(`No data found for ${filterKey} ${filterValue}`)
             }
 
-            snapshot.forEach(async (doc) => await doc.ref.update(newData))
+            snapshot.forEach(async (doc) => await doc.ref.update(change(doc.data())))
 
             return {
                 success: true,
@@ -122,7 +122,7 @@ class DataEditor {
     generateApiResponse(dbResult) {
         if (dbResult.success) {
             return {
-                status: !!dbResult.item || !!dbResult.data ? 200 : 400,
+                status: !!dbResult.item || !!dbResult.data?.length ? 200 : 400,
                 item: dbResult.item ?? {},
                 data: dbResult.data ?? [],
             }
@@ -166,20 +166,23 @@ class DataEditor {
     }
 
     async getUser(username, password, jwtBypass = false) {
-        if (!jwtBypass) {
-            password = await this.hashPassword(password)
-        }
-
+        console.log('username:', username)
         const dbResult = await this.readOne(
             collections.USERS,
             (data => 
                 (data.username === username || data.email === username)
-                && (jwtBypass || data.password === password)
             )
         )
 
         if (!!dbResult.item) {
+            const correctPassword = jwtBypass || await bcrypt.compare(password, dbResult.item.password)
+            if (!correctPassword) {
+                dbResult.item = null
+                return this.generateApiResponse(dbResult)
+            }
+
             dbResult.item = await this.populateLinkInfo(dbResult.item)
+            dbResult.item.password = undefined
         }
 
         return this.generateApiResponse(dbResult)
@@ -276,6 +279,14 @@ class DataEditor {
 
         const dbResult = await this.create(collections.LINKS, newLink)
 
+        await this.update(
+            collections.USERS, 'username', createdBy,
+            data => ({
+                ...data,
+                links: data.links ? [...data.links, trackingID] : [trackingID],
+            })
+        )
+
         return this.generateApiResponse(dbResult)
     }
 
@@ -283,6 +294,14 @@ class DataEditor {
         click.clickID = `${click.linkID}_${click.timestamp}`
 
         const dbResult = await this.create(collections.CLICKS, click)
+
+        await this.update(
+            collections.LINKS, 'displayID', click.linkID,
+            data => ({
+                ...data,
+                clicks: data.clicks ? [...data.clicks, click] : [click]
+            }),
+        )
 
         return this.generateApiResponse(dbResult)
     }

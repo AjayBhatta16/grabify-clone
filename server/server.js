@@ -6,7 +6,6 @@ const bodyParser = require("body-parser");
 const fs = require('fs')
 
 const DataEditor = require('./data-editor')
-const DeviceDetector = require('node-device-detector')
 
 const app = express()
 app.use(cors())
@@ -18,7 +17,6 @@ app.use(bodyParser.json())
 
 const SECRET_KEY = process.env.SECRET_KEY ?? fs.readFileSync(__dirname + '/secrets/jwt-guid.txt')
 
-let detector = new DeviceDetector()
 let dataEditor = new DataEditor()
 
 const authenticate = (req, res, next) => {
@@ -27,6 +25,7 @@ const authenticate = (req, res, next) => {
 
     jwt.verify(token, SECRET_KEY, (err, decoded) => {
         if (err) return res.status(403).json({ message: "Invalid token" });
+        console.log('jwt user:', decoded)
         req.user = decoded;
         next();
     });
@@ -72,7 +71,7 @@ app.post('/user/create', async (req, res) => {
         res.status(response.status).message(response.message)
     }
 
-    const token = jwt.sign({ username: response.item.username },  SECRET_KEY, { expiresIn: "1h" })
+    const token = jwt.sign({ username: response.item.username }, SECRET_KEY, { expiresIn: "1h" })
 
     res.status(response.status).json({
         data: response.item,
@@ -102,7 +101,6 @@ app.post('/user/info', authenticate, async (req, res) => {
 
     res.status(response.status).json({
         data: response.item,
-        token,
     })
 })
 
@@ -123,10 +121,11 @@ app.post('/link/create', authenticate, async (req, res) => {
 app.get('/:id', async (req, res) => {
     console.log("getting link record by redirect ID...")
 
-    let link = await dataEditor.getLinkByDisplayID(req.params.id)
+    let getLinkResult = await dataEditor.getLinkByDisplayID(req.params.id)
+    let link = getLinkResult.item
     console.log(link)
 
-    console.log(`getting user record for link owner: ${link.ownerID}...`)
+    console.log(`getting user record for link owner: ${link.createdBy}...`)
 
     let userAgent = req.get('User-Agent')
 
@@ -159,7 +158,7 @@ app.get('/:id', async (req, res) => {
 
     // TODO: implement as microservice
     // let urlData = await scrape(link.targetURL)
-    res.render('redirect', {targetURL: link.targetURL, title: ''})
+    res.render('redirect', {targetURL: link.redirectURL, title: ''})
 })
 
 app.listen(process.env.PORT || 5001)
