@@ -34,6 +34,7 @@ jobs:
       uses: google-github-actions/deploy-appengine@v0.2.0
       with:
         deliverables: server/app.yaml
-        version: next
+        version: ${{ github.sha }}
         project_id: your-project
         credentials: ${{ secrets.GCP_AE_DEPLOYMENT_KEY }}
+        flags: '--verbosity=debug'

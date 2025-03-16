@@ -31,6 +31,8 @@ const authenticate = (req, res, next) => {
     });
 };
 
+app.get('/health-check', (_, res) => res.status(200).message('The App is Running'))
+
 app.get('/', (_, res) => {
     res.sendFile('public/index.html', {root: __dirname})
 })
