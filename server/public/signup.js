@@ -33,7 +33,7 @@ button.addEventListener('click', (e) => {
         email: email.value,
         password: password.value
     }
-    fetch(`${env.proto}://${env.domain}/user/create`, {
+    fetch(`${window.location.origin}/user/create`, {
         method: "POST",
         headers: {'Content-Type': 'application/json'}, 
         body: JSON.stringify(reqData)
