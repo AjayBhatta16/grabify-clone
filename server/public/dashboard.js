@@ -1,4 +1,4 @@
-fetch(`${env.proto}://${env.domain}/user/info`, {
+fetch(`${window.location.origin}/user/info`, {
     method: "POST",
     headers: {
         'Content-Type': 'application/json',
@@ -27,7 +27,7 @@ function populateLinks(links) {
                 <tr>
                     <td colspan="1">${i+1}</td>
                     <td colspan="1"><a href="/viewlink/${link.trackingID}">${link.trackingID}</a></td>
-                    <td colspan="1">http://${env.domain}/${link.displayID}</td>
+                    <td colspan="1">${window.location.origin}/${link.displayID}</td>
                     <td colspan="2">${(link.note && link.note.length > 0) ? link.note : 'none'}</td>
                     <td colspan="1">${link.clicks.length}</td>
                 </tr>
