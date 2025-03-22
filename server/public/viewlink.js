@@ -2,7 +2,7 @@ let link = JSON.parse(linkStr.replaceAll('&#34;','"'))
 const tbody = document.querySelector('tbody')
 const modals = document.querySelector('#modal-container')
 
-document.querySelector('h3').textContent += ` ${window.location.origin}/${link.redirectID}`
+document.querySelector('h3').textContent += ` ${window.location.origin}/${link.displayID}`
 
 if(link.clicks.length == 0) {
     tbody.innerHTML = `
@@ -41,7 +41,7 @@ if(link.clicks.length == 0) {
         tbody.innerHTML += `
             <tr>
                 <td>${i+1}</td>
-                <td>${(new Date(click.date)).toString().split(' (')[0]}</td>
+                <td>${(new Date(click.timestamp)).toString().split(' (')[0]}</td>
                 <td>${click.ip}</td>
                 <td>
                     <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#modal${i+1}">
