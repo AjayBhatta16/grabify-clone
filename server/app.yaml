@@ -1,0 +1,19 @@
+runtime: nodejs22
+env: standard
+handlers:
+  - url: /.*
+    script: auto
+readiness_check:
+  path: "/readiness_check"
+  check_interval_sec: 10
+  timeout_sec: 4
+  failure_threshold: 3
+  success_threshold: 1
+  app_start_timeout_sec: 1800
+liveness_check:
+  path: "/liveness_check"
+  check_interval_sec: 10
+  timeout_sec: 4
+  failure_threshold: 3
+  success_threshold: 1
+  initial_delay_sec: 30

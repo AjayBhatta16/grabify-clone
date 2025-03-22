@@ -1,0 +1,3 @@
+!secrets/serviceAccountKey.json
+!secrets/jwt-guid.txt
+/node_modules
