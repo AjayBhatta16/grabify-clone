@@ -35,6 +35,6 @@ jobs:
       with:
         deliverables: server/app.yaml
         version: ${{ github.sha }}
-        project_id: your-project
+        project_id: linkwire-urls
         credentials: ${{ secrets.GCP_AE_DEPLOYMENT_KEY }}
         flags: '--verbosity=debug'
