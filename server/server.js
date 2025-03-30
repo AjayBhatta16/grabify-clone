@@ -35,6 +35,14 @@ app.get('/', (_, res) => {
     res.sendFile('public/index.html', {root: __dirname})
 })
 
+app.get('/sitemap.xml', (_, res) => {
+    res.sendFile('public/sitemap.xml', {root: __dirname})
+})
+
+app.get('/robots.txt', (_, res) => {
+    res.sendFile('public/robots.txt', {root: __dirname})
+})
+
 app.get('/login', (_, res) => {
     res.sendFile('public/login.html', {root: __dirname})
 })
@@ -120,6 +128,10 @@ app.post('/link/create', authenticate, async (req, res) => {
 
 app.get('/:id', async (req, res) => {
     console.log("getting link record by redirect ID...")
+
+    if (req.params.id.length !== 6) {
+        res.status(404)
+    }
 
     let getLinkResult = await dataEditor.getLinkByDisplayID(req.params.id)
     let link = getLinkResult.item
