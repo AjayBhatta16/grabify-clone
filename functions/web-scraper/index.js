@@ -1,4 +1,8 @@
-const puppeteer = require('puppeteer')
+const { exec } = require("child_process")
+const { promisify } = require("util")
+const { JSDOM } = require("jsdom")
+
+const execPromise = promisify(exec)
 
 exports.scrapeURL = async (req, res) => {
     try {
@@ -14,17 +18,13 @@ exports.scrapeURL = async (req, res) => {
 }
 
 async function scrape(url) {
-    const browser = await puppeteer.launch()
-    const page = await browser.newPage()
+    const { stdout } = await execPromise(`curl ${url}`)
+    const jsdom = new JSDOM(stdout)
 
-    await page.goto(url, { waitUntil: 'networkidle2' })
+    const document = jsdom.window.document
 
-    const pageTitle = await page.title()
-
-    const ogImageUrl = await page.$eval(
-        'meta[property="og:image"]',
-        (meta) => meta ? meta.content : null
-    )
+    const pageTitle = document.querySelector('title')?.textContent ?? ''
+    const ogImageUrl = document.querySelector("meta[property='og:image']")?.content ?? ''
 
     return {
         pageTitle,

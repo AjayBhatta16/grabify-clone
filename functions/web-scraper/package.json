@@ -9,6 +9,6 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "puppeteer": "^24.4.0"
+    "jsdom": "^26.0.0"
   }
 }
