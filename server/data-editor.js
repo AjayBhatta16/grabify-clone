@@ -295,42 +295,7 @@ class DataEditor {
 
         const dbResult = await this.create(collections.CLICKS, click)
 
-        await this.update(
-            collections.LINKS, 'displayID', click.linkID,
-            data => ({
-                ...data,
-                clicks: data.clicks ? [...data.clicks, click] : [click]
-            }),
-        )
-
         return this.generateApiResponse(dbResult)
-    }
-    
-    // TODO: implement as microservice
-    getIPData(ip) {
-        return new Promise((resolve, reject) => {
-            http.get(`http://ip-api.com/json/${ip}?fields=status,message,city,regionName,country,isp,org,as,mobile,proxy,hosting`, res => {
-                let data = ''
-                res.on('data', chunk => {
-                    data += chunk
-                })
-                res.on('end', () => {
-                    let dataObj = JSON.parse(data)
-                    resolve({
-                        location: dataObj.city + ', ' + dataObj.regionName + ', ' + dataObj.country,
-                        isp: dataObj.isp,
-                        organization: dataObj.org,
-                        asn: dataObj.as,
-                        mobile: dataObj.mobile ? "yes" : "no",
-                        proxy: dataObj.proxy ? "yes" : "no",
-                        hosting: dataObj.hosting ? "yes" : "no"
-                    })
-                })
-            }).on('error', err => {
-                console.log(err)
-            })
-        })
-        
     }
 }
 
