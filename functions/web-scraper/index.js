@@ -30,7 +30,7 @@ async function scrape(url) {
         pageTitle,
         ogImageUrl,
     }
-}
+} 
 
 // uncomment the next line to test locally
 // scrape('https://github.com/AjayBhatta16').then(console.log)

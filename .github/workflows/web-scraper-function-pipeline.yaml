@@ -25,11 +25,9 @@ jobs:
       with:
         project_id: linkwire-urls
 
-    - name: Ensure proper permissions for deploy.sh
+    - name: Execute deploy script
       run: |
         cd functions/web-scraper
         chmod 700 deploy.sh
-
-    - name: Execute deploy script
-      run: ./deploy.sh
+        ./deploy.sh
     
