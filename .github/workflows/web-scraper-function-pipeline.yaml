@@ -1,0 +1,35 @@
+name: Deploy Web Scraper Function to GCP Cloud Run
+
+on:
+  push:
+    paths:
+      - "functions/web-scraper/**"
+    branches:
+      - production
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+   
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Authenticate with Google Cloud
+      uses: google-github-actions/auth@v2
+      with:
+        credentials_json: ${{ secrets.GCP_AE_DEPLOYMENT_KEY }}
+
+    - name: Set up Google Cloud SDK
+      uses: google-github-actions/setup-gcloud@v2
+      with:
+        project_id: linkwire-urls
+
+    - name: Ensure proper permissions for deploy.sh
+      run: |
+        cd functions/web-scraper
+        chmod 700 deploy.sh
+
+    - name: Execute deploy script
+      run: ./deploy.sh
+    
