@@ -36,6 +36,7 @@ app.get('/', (_, res) => {
 })
 
 app.get('/sitemap.xml', (_, res) => {
+    res.setHeader('Content-Type', 'application/xml')
     res.sendFile('public/sitemap.xml', {root: __dirname})
 })
 
