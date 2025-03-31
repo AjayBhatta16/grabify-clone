@@ -1,1 +1,1 @@
-gcloud functions deploy scrapeURL --runtime=nodejs22 --trigger-http --allow-unauthenticated --gen2
+gcloud functions deploy scrapeURL --region=us-east4 --runtime=nodejs22 --trigger-http --allow-unauthenticated --gen2
