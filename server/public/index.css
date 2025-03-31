@@ -2,8 +2,8 @@
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300&display=swap');
 
 .standard-bg, button {
-    background-color: #6036B7;
-    color: #ccf !important;
+    background-color: #16023f;
+    color: rgb(240, 240, 240) !important;
     font-family: 'Roboto', sans-serif;
 }
 
