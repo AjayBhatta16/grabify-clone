@@ -38,6 +38,12 @@ button.addEventListener('click', (e) => {
         headers: {'Content-Type': 'application/json'}, 
         body: JSON.stringify(reqData)
     }).then(res => {
+        if (!res.ok) {
+            return res.json().then(errorData => {
+                throw new Error(errorData.message ?? 'Something went wrong.')
+            })
+        }
+
         return res.json()
     }).then(res => {
         localStorage.setItem('token', res.token)
