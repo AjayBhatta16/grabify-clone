@@ -66,7 +66,9 @@ app.get('/viewlink/:id', async (req, res) => {
     let response = await dataEditor.getLinkByTrackingID(req.params.id)
 
     if (!response.item) {
-        res.status(response.status).message(response.message)
+        return res.status(response.status).send({
+            message: response.message
+        })
     }
 
     res.render('viewlink', {
@@ -79,7 +81,9 @@ app.post('/user/create', async (req, res) => {
     const response = await dataEditor.createNewUser(req.body)
 
     if (!response.item) {
-        res.status(response.status).message(response.message)
+        return res.status(response.status).send({
+            message: response.message
+        })
     }
 
     const token = jwt.sign({ username: response.item.username }, SECRET_KEY, { expiresIn: "1h" })
@@ -96,7 +100,9 @@ app.post('/user/verify', async (req, res) => {
     console.log('Login - getUser result:', response)
     
     if (!response.item) {
-        res.status(response.status).message(response.message)
+        return res.status(response.status).send({
+            message: response.message
+        })
     }
 
     const token = jwt.sign({ username: response.item.username },  SECRET_KEY, { expiresIn: "1h" })
@@ -121,7 +127,9 @@ app.post('/link/create', authenticate, async (req, res) => {
     )
 
     if (!response.item) {
-        res.status(response.status).message(response.message)
+        return res.status(response.status).send({
+            message: response.message
+        })
     }
 
     res.status(response.status).json({
