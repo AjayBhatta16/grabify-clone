@@ -41,7 +41,9 @@ class DataEditor {
     // CRUD interfaces
     async create(collectionName, data) {
         try {
-            const item = await this.db.collection(collectionName).add(data)
+            const result = await this.db.collection(collectionName).add(data)
+
+            const item = (await result.get()).data()
 
             return {
                 success: true,
