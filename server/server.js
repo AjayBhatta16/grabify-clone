@@ -77,6 +77,20 @@ app.get('/viewlink/:id', async (req, res) => {
     })
 })
 
+app.get('/links/:id', authenticate, async (req, res) => {
+    let response = await dataEditor.getLinkByTrackingID(req.params.id)
+
+    if (!response.item) {
+        return res.status(response.status).send({
+            message: response.message
+        })
+    }
+
+    res.status(response.status).json({
+        data: response.item,
+    })
+})
+
 app.post('/user/create', async (req, res) => {
     const response = await dataEditor.createNewUser(req.body)
 
