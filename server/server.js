@@ -34,7 +34,7 @@ const authenticate = (req, res, next) => {
 app.get('/health-check', (_, res) => res.status(200).message('The App is Running'))
 
 app.get('/', (_, res) => {
-    res.sendFile('public/index.html', {root: __dirname})
+    res.redirect('https://app.linkwire.cc')
 })
 
 app.get('/sitemap.xml', (_, res) => {
@@ -47,34 +47,19 @@ app.get('/robots.txt', (_, res) => {
 })
 
 app.get('/login', (_, res) => {
-    res.sendFile('public/login.html', {root: __dirname})
+    res.redirect('https://app.linkwire.cc/login')
 })
 
 app.get('/signup', (_, res) => {
-    res.sendFile('public/signup.html', {root: __dirname})
+    res.redirect('https://app.linkwire.cc/signup')
 })
 
 app.get('/dashboard', (_, res) => {
-    res.sendFile('public/dashboard.html', {root: __dirname})
-})
-
-app.get('/createlink', (_, res) => {
-    res.sendFile('public/createlink.html', {root: __dirname})
+    res.redirect('https://app.linkwire.cc/dashboard')
 })
 
 app.get('/viewlink/:id', async (req, res) => {
-    let response = await dataEditor.getLinkByTrackingID(req.params.id)
-
-    if (!response.item) {
-        return res.status(response.status).send({
-            message: response.message
-        })
-    }
-
-    res.render('viewlink', {
-        link: JSON.stringify(response.item), 
-        redirectID: response.item.displayID
-    })
+    res.redirect(`https://app.linkwire.cc/viewlink/${req.params.id}`)
 })
 
 app.get('/links/:id', authenticate, async (req, res) => {
