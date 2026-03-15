@@ -58,10 +58,6 @@ app.get('/dashboard', (_, res) => {
     res.redirect('https://app.linkwire.cc/dashboard')
 })
 
-app.get('/createlink', (_, res) => {
-    res.redirect('https://app.linkwire.cc/createlink')
-})
-
 app.get('/viewlink/:id', async (req, res) => {
     res.redirect(`https://app.linkwire.cc/viewlink/${req.params.id}`)
 })
